@@ -1,9 +1,8 @@
-import { Component, Inject, OnDestroy, Optional } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthResult } from '@core/auth/providers/authResult';
 import { AuthService } from '@core/auth/providers/authService';
-import { StartupService } from '@core/startup/startup.service';
+import { REDIRECT_DELAY } from '@core/constants';
 
 @Component({
   selector: 'auth-login',
@@ -15,10 +14,18 @@ export class UserLoginComponent {
     badge: ''
   };
 
-  constructor() {
+  constructor(protected service: AuthService, private router: Router) {
   }
 
   onLogin() {
+    this.service.authenticate({ badge: this.data.badge }).subscribe((result: AuthResult) => {
+      const redirect = result.getRedirect();
+      if (redirect) {
+        setTimeout(() => {
+          return this.router.navigateByUrl(redirect);
+        }, REDIRECT_DELAY);
+      }
+    });
     // setTimeout(() => {
     //   this.loading = false;
     //   if (this.type === 0) {
