@@ -1,0 +1,30 @@
+<!-- <div class="weui-cells__title"></div>
+    <div class="weui-cells weui-cells_form">
+        <div class="weui-cell">
+            <div class="weui-cell__hd"><label class="weui-label">账户</label></div>
+            <div class="weui-cell__bd weui-cell_primary">
+                <input type="tel" class="weui-input" required placeholder="手机号码"/>
+            </div>
+        </div>
+        <div class="weui-cell">
+            <div class="weui-cell__hd"><label class="weui-label">密码</label></div>
+            <div class="weui-cell__bd weui-cell_primary"><input type="password" class="weui-input" placeholder="不少于6位"/></div>
+        </div>
+    </div>
+    <div class="weui-cells__tips"></div>
+    <div class="weui-btn-area">
+        <a href="" class="weui-btn weui-btn_primary">登录</a>
+    </div> -->
+<form #f="ngForm" (ngSubmit)="onLogin()">
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">工牌</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" name="badge" [(ngModel)]='data.badge'
+            placeholder="请输入工牌" weui-input="number" weui-required="warn">
+      </div>
+    </div>
+  </div>
+</form>
