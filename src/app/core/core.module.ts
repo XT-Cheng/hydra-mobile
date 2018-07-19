@@ -14,6 +14,11 @@ import { EntityEpics } from '@core/store/entity/entity.epic';
 import { UserService } from '@core/store/providers/user.service';
 import { StateService } from '@core/store/providers/state.service';
 import { SearchService } from '@core/store/providers/search.service';
+import { BapiService } from '@core/hydra/bapi/bapi.service';
+
+const HYDRA_PROVIDERS = [
+  BapiService
+];
 
 const STORE_PROVIDERS = [
   ErrorService,
@@ -49,7 +54,12 @@ export class CoreModule {
   static forRoot(): ModuleWithProviders {
     return <ModuleWithProviders>{
         ngModule: CoreModule,
-        providers: [...AUTH_PROVIDERS, ...INTERCEPTOR_PROVIDERS, ...STORE_PROVIDERS]
+        providers: [
+          ...AUTH_PROVIDERS,
+          ...INTERCEPTOR_PROVIDERS,
+          ...STORE_PROVIDERS,
+          ...HYDRA_PROVIDERS
+        ]
     };
 }
 }

@@ -1,0 +1,17 @@
+.footer {
+    display: flex;
+    height: 3rem;
+}
+
+.footer-text {
+    flex: 6;
+    font-size: .5rem;
+    align-self: center;
+    text-align: center;
+}
+
+.footer-img {
+    flex: 6;
+    text-align: right;
+    margin-right: 5px;
+}

@@ -1,0 +1,26 @@
+.header {
+    display: flex;
+    height: 3rem;
+    background-color: #0f70b1;
+}
+
+.title {
+    flex: 6;
+    color: white;
+    font-size: 1.5rem;
+    align-self: center;
+    text-align: center;
+}
+
+.sidebar-btn {
+    flex: 2;
+    align-self: center;
+    text-align: center;
+}
+
+.help-btn {
+    flex: 2;
+    align-self: center;
+    text-align: center;
+}
+

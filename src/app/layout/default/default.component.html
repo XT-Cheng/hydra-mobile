@@ -1,0 +1,22 @@
+<weui-sidebar-container>
+    <weui-sidebar
+    [(status)]="_status"
+    [mode]="mode"
+    [position]="position"
+    [backdrop]="backdrop"
+    (openStart)="openStart()"
+    (opened)="opened()"
+    (closeStart)="closeStart()"
+    (closed)="closed()">
+      <div class="weui-article">
+          <p>这是侧边栏内容</p>
+          <weui-button weui-type="default" (click)="toggleOpened()">Close</weui-button>
+          <weui-button weui-type="default" closeSidebar>使用指令[closeSidebar]Close</weui-button>
+      </div>
+    </weui-sidebar>
+    <layout-header (menuClicked)='toggleOpened()'></layout-header>
+    <section class="content">
+      <router-outlet></router-outlet>
+    </section>
+    <layout-footer></layout-footer>
+</weui-sidebar-container>

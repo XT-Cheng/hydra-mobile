@@ -4,7 +4,10 @@
         "directive-selector": [
             true,
             "attribute",
-            "app",
+            [
+                "app",
+                "share"
+            ],
             "camelCase"
         ],
         "component-selector": [
@@ -13,7 +16,8 @@
             [
                 "app",
                 "layout",
-                "auth"
+                "auth",
+                "operation"
             ],
             "kebab-case"
         ]

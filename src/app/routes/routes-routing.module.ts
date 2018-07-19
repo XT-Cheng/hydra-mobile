@@ -3,20 +3,20 @@ import { RouterModule, Routes } from '@angular/router';
 import { RoutingGuard } from './routing-guard';
 import { LayoutAuthComponent } from '../layout/auth/auth.component';
 import { UserLoginComponent } from './auth/login/login.component';
+import { LayoutDefaultComponent } from '../layout/default/default.component';
+import { LogonOperationComponent } from './features/operation/components/logon-operation.component';
 
 const routes: Routes = [
-  // {
-  //   path: '',
-  //   component: LayoutDefaultComponent,
-  //   canActivate: [RoutingGuard],
-  //   children: [
-  //     { path: '', redirectTo: 'city', pathMatch: 'full' },
-  //     { path: 'city', loadChildren: 'app/routes/features/city/city.module#CityModule' },
-  //     { path: 'viewPoint', loadChildren: 'app/routes/features/viewPoint/viewPoint.module#ViewPointModule' },
-  //     // 业务子模块
-  //     // { path: 'widgets', loadChildren: './widgets/widgets.module#WidgetsModule' }
-  //   ]
-  // },
+  {
+    path: '',
+    component: LayoutDefaultComponent,
+    children: [
+      { path: 'operation', component: LogonOperationComponent},
+      // { path: 'viewPoint', loadChildren: 'app/routes/features/viewPoint/viewPoint.module#ViewPointModule' },
+      // 业务子模块
+      // { path: 'widgets', loadChildren: './widgets/widgets.module#WidgetsModule' }
+    ]
+  },
   // 全屏布局
   // {
   //     path: 'fullscreen',

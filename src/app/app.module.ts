@@ -11,6 +11,7 @@ import { IonicStorageModule } from '@ionic/storage';
 import { HttpClientModule } from '@angular/common/http';
 import { LayoutModule } from './layout/layout.module';
 import { RoutesModule } from './routes/routes.module';
+import { SharedModule } from './shared/shared.module';
 
 export function StartupServiceFactory(startupService: StartupService): Function {
   return () => startupService.load();
@@ -29,6 +30,7 @@ export function StartupServiceFactory(startupService: StartupService): Function 
     CoreModule.forRoot(),
     BrowserAnimationsModule,
     IonicStorageModule.forRoot(),
+    SharedModule,
     // RouterModule,
     RoutesModule
   ],
