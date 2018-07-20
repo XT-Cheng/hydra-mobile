@@ -8,7 +8,8 @@ import { RouterModule } from '@angular/router';
 import { HeaderComponent } from './default/header/header.component';
 import { LayoutDefaultComponent } from './default/default.component';
 import { FooterComponent } from './default/footer/footer.component';
-import { WeUiModule } from '../../../node_modules/ngx-weui';
+import { WeUiModule } from 'ngx-weui';
+import { CoreModule } from '@core/core.module';
 
 const PASSPORT = [
   LayoutAuthComponent
@@ -26,6 +27,7 @@ const DEFAULT = [
     FormsModule,
     RouterModule,
     WeUiModule,
+    CoreModule,
     ReactiveFormsModule
   ],
   providers: [],

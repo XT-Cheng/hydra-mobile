@@ -1,4 +1,6 @@
 import { Component, HostBinding } from '@angular/core';
+import { Router } from '@angular/router';
+import { TitleService } from '@core/title.service';
 
 @Component({
   selector: 'layout-default',
@@ -6,28 +8,34 @@ import { Component, HostBinding } from '@angular/core';
   styleUrls: ['./default.component.scss'],
 })
 export class LayoutDefaultComponent {
-    _status = false;
-    mode = 'slide';
-    position = 'left';
-    backdrop = true;
+  _status = false;
 
-    toggleOpened(): void {
-      this._status = !this._status;
+  constructor(private _router: Router, private _titleService: TitleService) {
+
   }
 
-  openStart() {
-      console.log('openStart');
+  toggleOpened(): void {
+    this._status = !this._status;
   }
 
-  opened() {
-      console.log('opened');
+  gotoOperation() {
+    this._router.navigateByUrl('operation').then(() => {
+      this._status = false;
+      this._titleService.setTitle('Operation');
+    });
   }
 
-  closeStart() {
-      console.log('closeStart');
+  gotoMachine() {
+    this._router.navigateByUrl('machine').then(() => {
+      this._status = false;
+      this._titleService.setTitle('Machine');
+    });
   }
 
-  closed() {
-      console.log('closed');
+  gotoMaterial() {
+    this._router.navigateByUrl('material').then(() => {
+      this._status = false;
+      this._titleService.setTitle('Machine');
+    });
   }
 }

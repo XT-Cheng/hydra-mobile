@@ -17,7 +17,9 @@
                 "app",
                 "layout",
                 "auth",
-                "operation"
+                "operation",
+                "machine",
+                "material"
             ],
             "kebab-case"
         ]

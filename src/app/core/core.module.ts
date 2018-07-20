@@ -15,6 +15,7 @@ import { UserService } from '@core/store/providers/user.service';
 import { StateService } from '@core/store/providers/state.service';
 import { SearchService } from '@core/store/providers/search.service';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
+import { TitleService } from '@core/title.service';
 
 const HYDRA_PROVIDERS = [
   BapiService
@@ -58,7 +59,8 @@ export class CoreModule {
           ...AUTH_PROVIDERS,
           ...INTERCEPTOR_PROVIDERS,
           ...STORE_PROVIDERS,
-          ...HYDRA_PROVIDERS
+          ...HYDRA_PROVIDERS,
+          TitleService
         ]
     };
 }

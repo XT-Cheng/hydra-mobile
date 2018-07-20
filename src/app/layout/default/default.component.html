@@ -1,17 +1,9 @@
 <weui-sidebar-container>
-    <weui-sidebar
-    [(status)]="_status"
-    [mode]="mode"
-    [position]="position"
-    [backdrop]="backdrop"
-    (openStart)="openStart()"
-    (opened)="opened()"
-    (closeStart)="closeStart()"
-    (closed)="closed()">
+    <weui-sidebar [(status)]="_status">
       <div class="weui-article">
-          <p>这是侧边栏内容</p>
-          <weui-button weui-type="default" (click)="toggleOpened()">Close</weui-button>
-          <weui-button weui-type="default" closeSidebar>使用指令[closeSidebar]Close</weui-button>
+          <weui-button (click)="gotoOperation()">工单工单工单</weui-button>
+          <weui-button (click)="gotoMachine()">设备</weui-button>
+          <weui-button (click)="gotoMaterial()">物料</weui-button>
       </div>
     </weui-sidebar>
     <layout-header (menuClicked)='toggleOpened()'></layout-header>

@@ -1,4 +1,5 @@
 import { Component, Output, EventEmitter } from '@angular/core';
+import { TitleService } from '@core/title.service';
 
 @Component({
   selector: 'layout-header',
@@ -8,8 +9,12 @@ import { Component, Output, EventEmitter } from '@angular/core';
 export class HeaderComponent {
   @Output('menuClicked') menuClicked: EventEmitter<void>;
 
-  constructor() {
+  title = 'Hydra Mobile';
+
+  constructor(private titleService: TitleService) {
     this.menuClicked = new EventEmitter();
+
+    this.titleService.titleChanged.subscribe((title) => this.title = title);
   }
 
   clicked() {
