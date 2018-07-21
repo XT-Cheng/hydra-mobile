@@ -3,10 +3,11 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AutofocusDirective } from './directives/autofocus.directive';
+import { KeyHandlerDirective } from './directives/keyhandler.directive';
 
 //#region: your componets & directives
 const COMPONENTS = [];
-const DIRECTIVES = [AutofocusDirective];
+const DIRECTIVES = [AutofocusDirective, KeyHandlerDirective];
 const ENTRIES = [];
 // endregion
 
