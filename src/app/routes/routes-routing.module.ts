@@ -1,23 +1,24 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { RoutingGuard } from './routing-guard';
+
 import { LayoutAuthComponent } from '../layout/auth/auth.component';
-import { UserLoginComponent } from './auth/login/login.component';
 import { LayoutDefaultComponent } from '../layout/default/default.component';
-import { LogonOperationComponent } from './features/operation/logon-operation.component';
-import { OperationListComponent } from './features/operation/operationList.component';
+import { UserLoginComponent } from './auth/login/login.component';
 import { MachineListComponent } from './features/machine/machineList.component';
 import { MaterialListComponent } from './features/material/materialList.component';
+import { LogonOperationComponent } from './features/operation/logon-operation.component';
+import { OperationListComponent } from './features/operation/operationList.component';
+import { RoutingGuard } from './routing-guard';
 
 const routes: Routes = [
   {
     path: '',
     component: LayoutDefaultComponent,
     children: [
-      { path: 'operation', component: OperationListComponent},
-      { path: 'material', component: MaterialListComponent},
-      { path: 'machine', component: MachineListComponent},
-      { path: 'operation/logon', component: LogonOperationComponent},
+      { path: 'operation', component: OperationListComponent },
+      { path: 'material', component: MaterialListComponent },
+      { path: 'machine', component: MachineListComponent },
+      { path: 'operation/logon', component: LogonOperationComponent },
       // { path: 'viewPoint', loadChildren: 'app/routes/features/viewPoint/viewPoint.module#ViewPointModule' },
       // 业务子模块
       // { path: 'widgets', loadChildren: './widgets/widgets.module#WidgetsModule' }
@@ -51,7 +52,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, {enableTracing: true, useHash: true })],
+  imports: [RouterModule.forRoot(routes, { useHash: true })],
   exports: [RouterModule],
   providers: [RoutingGuard]
 })

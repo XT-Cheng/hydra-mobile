@@ -1,24 +1,25 @@
 import { NgReduxModule } from '@angular-redux/store';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { NgModule, Optional, SkipSelf, ModuleWithProviders } from '@angular/core';
-import { ErrorInterceptorService } from '@core/interceptor/error.interceptor.service';
-import { IonicStorageModule } from '@ionic/storage';
-
-import { throwIfAlreadyLoaded } from '@core/module-import-guard';
+import { ModuleWithProviders, NgModule, Optional, SkipSelf } from '@angular/core';
 import { AuthService } from '@core/auth/providers/authService';
 import { TokenService } from '@core/auth/providers/tokenService';
 import { TokenStorage } from '@core/auth/providers/tokenStorage';
-import { ErrorService } from '@core/store/providers/error.service';
-import { RootEpics } from '@core/store/store.epic';
-import { EntityEpics } from '@core/store/entity/entity.epic';
-import { UserService } from '@core/store/providers/user.service';
-import { StateService } from '@core/store/providers/state.service';
-import { SearchService } from '@core/store/providers/search.service';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
+import { FetchService } from '@core/hydra/fetch.service';
+import { ErrorInterceptorService } from '@core/interceptor/error.interceptor.service';
+import { throwIfAlreadyLoaded } from '@core/module-import-guard';
+import { EntityEpics } from '@core/store/entity/entity.epic';
+import { ErrorService } from '@core/store/providers/error.service';
+import { SearchService } from '@core/store/providers/search.service';
+import { StateService } from '@core/store/providers/state.service';
+import { UserService } from '@core/store/providers/user.service';
+import { RootEpics } from '@core/store/store.epic';
 import { TitleService } from '@core/title.service';
+import { IonicStorageModule } from '@ionic/storage';
 
 const HYDRA_PROVIDERS = [
-  BapiService
+  BapiService,
+  FetchService
 ];
 
 const STORE_PROVIDERS = [
@@ -41,7 +42,7 @@ const INTERCEPTOR_PROVIDERS = [
     provide: HTTP_INTERCEPTORS,
     useClass: ErrorInterceptorService,
     multi: true
-}
+  }
 ];
 
 @NgModule({
@@ -54,14 +55,14 @@ export class CoreModule {
 
   static forRoot(): ModuleWithProviders {
     return <ModuleWithProviders>{
-        ngModule: CoreModule,
-        providers: [
-          ...AUTH_PROVIDERS,
-          ...INTERCEPTOR_PROVIDERS,
-          ...STORE_PROVIDERS,
-          ...HYDRA_PROVIDERS,
-          TitleService
-        ]
+      ngModule: CoreModule,
+      providers: [
+        ...AUTH_PROVIDERS,
+        ...INTERCEPTOR_PROVIDERS,
+        ...STORE_PROVIDERS,
+        ...HYDRA_PROVIDERS,
+        TitleService
+      ]
     };
-}
+  }
 }
