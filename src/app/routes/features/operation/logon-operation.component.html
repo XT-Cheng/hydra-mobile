@@ -1,22 +1,39 @@
 <form #f="ngForm" (ngSubmit)="logonOP()">
-    <div class="weui-cells weui-cells_form">
-      <div class="weui-cell">
-        <div class="weui-cell__hd">
-          <label class="weui-label">设备</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" shareAutoFocus name="machine" [(ngModel)]='data.machine' placeholder="请输入设备" weui-required>
-        </div>
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">设备</label>
       </div>
-      <div class="weui-cell">
-        <div class="weui-cell__hd">
-          <label class="weui-label">工单</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" name="operation" [(ngModel)]='data.operation' disabled placeholder="下一个工单" weui-required="info">
-        </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #machine shareAutoFocus name="machine" (keydown.enter)='MachineEntered($event)' [(ngModel)]='machineInfo.machine'
+          placeholder="请输入设备" weui-required>
       </div>
-      <button weui-button>登录</button>
     </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{machineInfo.description}}
+      </span>
+    </label>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">下一工单</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" name="nextOperation" #nextOperation [(ngModel)]='machineInfo.nextOperation' disabled placeholder="下一个工单">
+      </div>
+    </div>
+    <div class="weui-cells__title">物料列表</div>
+    <div class="weui-cells">
+      <div *ngFor='let comp of componentsInfo' class="weui-cell weui-cell_access" (click)='showLoadComp()'>
+        <div class="weui-cell__hd">
+          <i style='display: block;' [ngClass]='getResultClass(comp)'></i>
+        </div>
+        <div class="weui-cell__bd">
+          <p>{{comp.MATERIAL}}</p>
+        </div>
+        <div class="weui-cell__ft">{{comp.INPUTBATCH}}</div>
+      </div>
+    </div>
+    <button weui-button>登录</button>
+  </div>
 </form>
-  

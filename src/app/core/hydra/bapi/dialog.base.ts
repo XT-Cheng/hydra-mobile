@@ -13,12 +13,12 @@ export abstract class DialogBase {
     }
 
     public dialogString(): string {
-        return `DLG=${this._type}|
-                DAT=${this._date.getMonth() + 1}/${this._date.getDate() + 1}/${this._date.getFullYear()}|
-                ZEI=${this.seconds}|
-                USR=${DIALOG_USER}|
-                DLGDAT=${this._dialogDate.getMonth() + 1}/${this._dialogDate.getDate() + 1}/${this._dialogDate.getFullYear()}|
-                DLGZEI=${this.dialogSeconds}|`;
+        return `DLG=${this._type}|` +
+                `DAT=${this._date.getMonth() + 1}/${this._date.getDate() + 1}/${this._date.getFullYear()}|` +
+                `ZEI=${this.seconds}|` +
+                `USR=${DIALOG_USER}|` +
+                `DLGDAT=${this._dialogDate.getMonth() + 1}/${this._dialogDate.getDate() + 1}/${this._dialogDate.getFullYear()}|` +
+                `DLGZEI=${this.dialogSeconds}|`;
     }
 
     private get seconds(): number {

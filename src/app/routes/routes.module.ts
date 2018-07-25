@@ -11,6 +11,9 @@ import { SharedModule } from '../shared/shared.module';
 import { OperationListComponent } from './features/operation/operationList.component';
 import { MaterialListComponent } from './features/material/materialList.component';
 import { MachineListComponent } from './features/machine/machineList.component';
+import { CreateBatchComponent } from './features/material/create-batch.component';
+import { MoveBatchComponent } from './features/material/move-batch.component';
+import { SplitBatchComponent } from './features/material/split-batch.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
@@ -22,7 +25,10 @@ const MACHINE_COMPONENTS = [
 ];
 
 const MATERIAL_COMPONENTS = [
-  MaterialListComponent
+  MaterialListComponent,
+  CreateBatchComponent,
+  MoveBatchComponent,
+  SplitBatchComponent
 ];
 
 const AUTH_COMPONENTS = [

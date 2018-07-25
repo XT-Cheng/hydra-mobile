@@ -16,9 +16,11 @@ import { StateService } from '@core/store/providers/state.service';
 import { SearchService } from '@core/store/providers/search.service';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
 import { TitleService } from '@core/title.service';
+import { FetchService } from '@core/hydra/fetch.service';
 
 const HYDRA_PROVIDERS = [
-  BapiService
+  BapiService,
+  FetchService
 ];
 
 const STORE_PROVIDERS = [

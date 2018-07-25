@@ -19,7 +19,8 @@
                 "auth",
                 "operation",
                 "machine",
-                "material"
+                "material",
+                "batch"
             ],
             "kebab-case"
         ]

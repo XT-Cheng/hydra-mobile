@@ -3,7 +3,7 @@ import { NgModule, APP_INITIALIZER } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
-import { WeUiModule } from 'ngx-weui';
+import { WeUiModule, ToastConfig } from 'ngx-weui';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CoreModule } from '@core/core.module';
 import { StartupService } from '@core/startup/startup.service';
@@ -15,6 +15,18 @@ import { SharedModule } from './shared/shared.module';
 
 export function StartupServiceFactory(startupService: StartupService): Function {
   return () => startupService.load();
+}
+
+export function toastConfig() {
+  return Object.assign(new ToastConfig(),
+    {
+      success: {
+        text: '已完成', icon: 'weui-icon-success-no-circle', time: 2000
+      },
+      loading: {
+        text: '执行中…', icon: 'weui-loading', time: 2000
+      }
+    });
 }
 
 @NgModule({
@@ -41,7 +53,8 @@ export function StartupServiceFactory(startupService: StartupService): Function 
       useFactory: StartupServiceFactory,
       deps: [StartupService],
       multi: true
-    }
+    },
+    { provide: ToastConfig, useFactory: toastConfig }
   ],
   bootstrap: [AppComponent]
 })

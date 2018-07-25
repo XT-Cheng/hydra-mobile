@@ -8,6 +8,9 @@ import { LogonOperationComponent } from './features/operation/logon-operation.co
 import { OperationListComponent } from './features/operation/operationList.component';
 import { MachineListComponent } from './features/machine/machineList.component';
 import { MaterialListComponent } from './features/material/materialList.component';
+import { CreateBatchComponent } from './features/material/create-batch.component';
+import { MoveBatchComponent } from './features/material/move-batch.component';
+import { SplitBatchComponent } from './features/material/split-batch.component';
 
 const routes: Routes = [
   {
@@ -18,6 +21,9 @@ const routes: Routes = [
       { path: 'material', component: MaterialListComponent},
       { path: 'machine', component: MachineListComponent},
       { path: 'operation/logon', component: LogonOperationComponent},
+      { path: 'material/create', component: CreateBatchComponent},
+      { path: 'material/move', component: MoveBatchComponent},
+      { path: 'material/split', component: SplitBatchComponent},
       // { path: 'viewPoint', loadChildren: 'app/routes/features/viewPoint/viewPoint.module#ViewPointModule' },
       // 业务子模块
       // { path: 'widgets', loadChildren: './widgets/widgets.module#WidgetsModule' }
@@ -51,7 +57,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, {enableTracing: true, useHash: true })],
+  imports: [RouterModule.forRoot(routes, { useHash: true })],
   exports: [RouterModule],
   providers: [RoutingGuard]
 })

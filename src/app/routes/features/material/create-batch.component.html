@@ -1,0 +1,44 @@
+<form #f="ngForm">
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">批次号</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #licenseTag (keydown.enter)='LicenseTagEntered($event)' shareAutoFocus name="licenseTag" [(ngModel)]='data.licenseTag'
+          placeholder="请输入批次" weui-required required>
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">库存位置</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #materialBuffer (keydown.enter)='MaterialBufferEntered($event)' name="materialBuffer" [(ngModel)]='data.materialBuffer'
+          placeholder="请输入库存位置" weui-required required>
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">操作人员</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='data.operator'
+          placeholder="请输入操作人员" weui-required required>
+      </div>
+    </div>
+    <button weui-button [disabled]='isDisable()' (click)='createBatch()'>创建</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>重置</button>
+  </div>
+</form>
+<div class="weui-cells">
+  <a *ngFor='let ret of results' class="weui-cell weui-cell_access" href="javascript:;">
+    <div class="weui-cell__hd">
+      <i [ngClass]='getResultClass(ret)'></i>
+    </div>
+    <div class="weui-cell__bd">
+      <p>{{ret.message}}</p>
+    </div>
+    <div class="weui-cell__ft">{{ret.timeStamp | date: 'yyyy/MM/dd, HH:mm:ss'}}</div>
+  </a>
+</div>
