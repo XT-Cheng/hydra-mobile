@@ -1,16 +1,17 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { RoutingGuard } from './routing-guard';
+
 import { LayoutAuthComponent } from '../layout/auth/auth.component';
-import { UserLoginComponent } from './auth/login/login.component';
 import { LayoutDefaultComponent } from '../layout/default/default.component';
-import { LogonOperationComponent } from './features/operation/logon-operation.component';
-import { OperationListComponent } from './features/operation/operationList.component';
+import { UserLoginComponent } from './auth/login/login.component';
 import { MachineListComponent } from './features/machine/machineList.component';
 import { MaterialListComponent } from './features/material/materialList.component';
 import { CreateBatchComponent } from './features/material/create-batch.component';
 import { MoveBatchComponent } from './features/material/move-batch.component';
 import { SplitBatchComponent } from './features/material/split-batch.component';
+import { OperationListComponent } from './features/operation/operationList.component';
+import { LogonOperationComponent } from './features/operation/logon-operation.component';
+import { RoutingGuard } from './routing-guard';
 
 const routes: Routes = [
   {
