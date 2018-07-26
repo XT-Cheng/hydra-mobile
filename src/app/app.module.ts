@@ -21,10 +21,10 @@ export function toastConfig() {
   return Object.assign(new ToastConfig(),
     {
       success: {
-        text: '已完成', icon: 'weui-icon-success-no-circle', time: 2000
+        text: '已完成', icon: 'weui-icon-success-no-circle', time: 0
       },
       loading: {
-        text: '执行中…', icon: 'weui-loading', time: 2000
+        text: '执行中…', icon: 'weui-loading', time: 0
       }
     });
 }

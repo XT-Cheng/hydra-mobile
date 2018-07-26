@@ -1,0 +1,47 @@
+<form #f="ngForm">
+    <div class="weui-cells weui-cells_form">
+      <div class="weui-cell">
+        <div class="weui-cell__hd">
+          <label class="weui-label">设备</label>
+        </div>
+        <div class="weui-cell__bd">
+          <input class="weui-input" #machine shareAutoFocus name="machine" (keydown.enter)='MachineEntered($event)' [(ngModel)]='machineInfo.machine'
+            placeholder="请输入设备" weui-required>
+        </div>
+      </div>
+      <label for="weuiAgree" class="weui-agree">
+        <span class="weui-agree__text">
+          {{machineInfo.description}}
+        </span>
+      </label>
+      <div class="weui-cell">
+        <div class="weui-cell__hd">
+          <label class="weui-label">半成品标签</label>
+        </div>
+        <div class="weui-cell__bd">
+          <input class="weui-input" #batchName (keydown.enter)='BatchNameEntered($event)' name="batchName" [(ngModel)]='outputBatch.batchName'
+            placeholder="请输入半成品标签" weui-required required>
+        </div>
+      </div>
+      <div class="weui-cell">
+        <div class="weui-cell__hd">
+          <label class="weui-label">半成品数量</label>
+        </div>
+        <div class="weui-cell__bd">
+          <input class="weui-input" #batchQty (keydown.enter)='QuantityEntered($event)' name="batchQty" [(ngModel)]='outputBatch.batchQty'
+            placeholder="请输入半成品数量" weui-required='warn' weui-input='number' required>
+        </div>
+      </div>
+      <div class="weui-cell">
+        <div class="weui-cell__hd">
+          <label class="weui-label">操作人员</label>
+        </div>
+        <div class="weui-cell__bd">
+          <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='outputBatch.operator'
+            placeholder="请输入操作人员" weui-required required>
+        </div>
+      </div>
+      <button weui-button [disabled]='isDisable()' (click)='generateOutputBatch()'>生成批次</button>
+    </div>
+  </form>
+  

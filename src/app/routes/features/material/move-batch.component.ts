@@ -107,7 +107,7 @@ export class MoveBatchComponent {
 
     this._fetchService.getBatchInformation(this.data.licenseTag).subscribe((ret) => {
       this._toastService.hide();
-      if (ret.length === 0) {
+      if (ret === null || ret.length === 0) {
         this._tipService['warn'](`批次${this.data.licenseTag}不存在！`);
         this.resetForm();
       } else {

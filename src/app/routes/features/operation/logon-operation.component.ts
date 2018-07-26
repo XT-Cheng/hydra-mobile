@@ -3,7 +3,7 @@ import { BapiService } from '@core/hydra/bapi/bapi.service';
 import { FetchService } from '@core/hydra/fetch.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { TitleService } from '@core/title.service';
-import { ToastService, ToptipsService, DialogService, DialogConfig } from 'ngx-weui';
+import { ToastService, ToptipsService, DialogService, DialogConfig, PopupComponent } from 'ngx-weui';
 import { filter, switchMap } from 'rxjs/operators';
 import { NgForm } from '@angular/forms';
 
@@ -15,6 +15,8 @@ import { NgForm } from '@angular/forms';
 export class LogonOperationComponent {
   @ViewChild('f') form: NgForm;
   @ViewChild('machine') machineElem: ElementRef;
+  @ViewChild('batch') batchElem: ElementRef;
+  @ViewChild('operator') operatorElem: ElementRef;
   @ViewChild('nextOperation') nextOperationElem: ElementRef;
 
   machineInfo: any = {
@@ -24,33 +26,14 @@ export class LogonOperationComponent {
     nextOperation: ''
   };
 
-  componentsInfo: any = [];
-
-  private DEFCONFIG: DialogConfig = <DialogConfig>{
-    title: '弹窗标题',
-    content: '弹窗内容，告知当前状态、信息和解决方法，描述文字尽量控制在三行内',
-    cancel: '辅助操作',
-    confirm: '主操作',
-    inputPlaceholder: '必填项',
-    inputError: '请填写或选择项',
-    inputRequired: true,
-    inputAttributes: {
-      maxlength: 140,
-      cn: 2
-    },
-    inputOptions: [
-      { text: '请选择' },
-      { text: '杜蕾斯', value: 'durex', other: 1 },
-      { text: '杰士邦', value: 'jissbon' },
-      { text: '多乐士', value: 'donless' },
-      { text: '处男', value: 'first' }
-    ]
+  loadBatch: any = {
+    batchName: '',
+    operator: ''
   };
-  config: DialogConfig = {};
 
+  componentsInfo: any = [];
   constructor(private _bapiService: BapiService, private _fetchService: FetchService,
     private _routeService: Router, private _titleService: TitleService,
-    private _dialogService: DialogService,
     private _tipService: ToptipsService, private _toastService: ToastService) {
     this._routeService.events.pipe(
       filter((event) => event instanceof NavigationEnd)
@@ -59,8 +42,82 @@ export class LogonOperationComponent {
     });
   }
 
+  BatchEntered(event) {
+    event.preventDefault();
+
+    if (this.machineInfo.machine === '') {
+      return;
+    }
+
+    if (this.loadBatch.batchName === '') {
+      return;
+    }
+
+    this.operatorElem.nativeElement.focus();
+  }
+
+  OperatorEntered(event) {
+    event.preventDefault();
+
+    if (this.machineInfo.machine === '') {
+      return;
+    }
+
+    if (this.loadBatch.operator === '') {
+      return;
+    }
+
+    if (this.loadBatch.batchName === '') {
+      this.logonOP();
+    } else {
+      this.LogonInputBatch();
+    }
+  }
+
+  LogonInputBatch() {
+    let comp: any;
+    this._toastService['loading']();
+
+    this._fetchService.getBatchInformation(this.loadBatch.batchName).pipe(
+      switchMap(ret => {
+        if (ret === null || ret.length === 0) {
+          this._tipService['warn'](`批次${this.loadBatch.batchName}不存在！`);
+          throw Error(`批次${this.loadBatch.batchName}不存在！`);
+        }
+
+        comp = this.componentsInfo.find(c => c.MATERIAL === ret[0].MATERIALNUMBER);
+
+        if (comp) {
+          comp.BATCHQTY = ret[0].REMAINQUANTITY;
+        }
+
+        return this._bapiService.logonBatch(this.machineInfo.nextOperation, this.machineInfo.machine,
+          this.loadBatch.operator, ret[0].ID, ret[0].MATERIALNUMBER);
+      })
+    ).subscribe(ret => {
+      if (!ret.isSuccess) {
+        this._tipService['warn'](ret.description);
+      }
+
+      if (comp) {
+        comp.INPUTBATCH = this.loadBatch.batchName;
+      }
+
+      this._toastService.hide();
+      this.loadBatch = {};
+      this.batchElem.nativeElement.focus();
+    }, error => {
+      this.loadBatch.batchName = '';
+      this.loadBatch.operator = '';
+      this._toastService.hide();
+
+      this.batchElem.nativeElement.focus();
+    });
+  }
+
   MachineEntered(event) {
     event.preventDefault();
+
     if (this.machineInfo.machine === '') {
       return;
     }
@@ -69,10 +126,9 @@ export class LogonOperationComponent {
 
     this._fetchService.getMachineWithOperation(this.machineInfo.machine).pipe(
       switchMap((ret) => {
-        this._toastService.hide();
-        if (!ret) {
+        if (!ret.MACHINE) {
           this._tipService['warn'](`设备${this.machineInfo.machine}不存在！`);
-          this.resetForm();
+          throw Error(`设备${this.machineInfo.machine}不存在！`);
         } else {
           this.machineInfo.machine = ret.MACHINE;
           this.machineInfo.currentOperation = ret.CURRENTOPERATION;
@@ -83,12 +139,29 @@ export class LogonOperationComponent {
         return this._fetchService.getComponentOfOperation(this.machineInfo.nextOperation);
       })
     ).subscribe((ret) => {
+      this._toastService.hide();
       this.componentsInfo = ret;
+
+      if (this.isMissComponent()) {
+        this.batchElem.nativeElement.focus();
+      } else {
+        this.operatorElem.nativeElement.focus();
+      }
+    }, (error) => {
+      this._toastService.hide();
+      this.resetForm();
+      this.machineElem.nativeElement.focus();
     });
   }
 
   logonOP() {
-
+    this._toastService['loading']();
+    this._bapiService.logonOperation(this.machineInfo.nextOperation, this.machineInfo.machine,
+      this.loadBatch.operator).subscribe(ret => {
+        this._tipService['primary'](`工单${this.machineInfo.nextOperation}登录成功！`);
+        this._toastService.hide();
+        this.resetForm();
+    });
   }
 
   getResultClass(comp) {
@@ -109,26 +182,47 @@ export class LogonOperationComponent {
   resetForm() {
     this.form.reset();
     this.machineInfo = {};
-
+    this.componentsInfo = [];
     this.machineElem.nativeElement.focus();
   }
 
-  showLoadComp() {
-    const cog = Object.assign({}, this.DEFCONFIG, <DialogConfig>{
-      skin: 'auto',
-      type: 'prompt',
-      confirm: '确认',
-      cancel: '取消',
-      input: 'text',
-      inputValue: undefined,
-      inputRegex: null
-    });
-    setTimeout(() => {
-      this._dialogService.show(cog).subscribe((res: any) => {
-        console.log(res);
-      });
+  isDisable() {
+    return this.machineInfo.currentOperation !== null || !this.form.valid || this.isMissComponent();
+  }
+
+  isMissComponent() {
+    let isMissing = false;
+    this.componentsInfo.forEach(c => {
+      if (c.INPUTBATCH === '') {
+        isMissing = true;
+        return;
+      }
     });
 
-    return false;
+    return isMissing;
+  }
+
+  logoffBatch(comp) {
+    this._toastService['loading']();
+    this._bapiService.logoffBatch(this.machineInfo.nextOperation, this.machineInfo.machine, '20120821',
+      comp.INPUTBATCH, 0).subscribe(ret => {
+        if (!ret.isSuccess) {
+          this._tipService['warn'](ret.description);
+          this.loadBatch = {};
+          this.batchElem.nativeElement.focus();
+        } else {
+          comp.INPUTBATCH = '';
+          comp.BATCHQTY = '';
+        }
+        this._toastService.hide();
+      });
+  }
+
+  compDescription(comp) {
+    if (comp.INPUTBATCH === ``) {
+      return ``;
+    } else {
+      return `批次:${comp.INPUTBATCH},当前数量：${comp.BATCHQTY}`;
+    }
   }
 }

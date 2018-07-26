@@ -14,10 +14,14 @@ import { MachineListComponent } from './features/machine/machineList.component';
 import { CreateBatchComponent } from './features/material/create-batch.component';
 import { MoveBatchComponent } from './features/material/move-batch.component';
 import { SplitBatchComponent } from './features/material/split-batch.component';
+import { GenerateOutputSemiBatchComponent } from './features/operation/generate-output-semi.component';
+import { GenerateOutputFGBatchComponent } from './features/operation/generate-output-fg.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
-  OperationListComponent
+  OperationListComponent,
+  GenerateOutputSemiBatchComponent,
+  GenerateOutputFGBatchComponent
 ];
 
 const MACHINE_COMPONENTS = [

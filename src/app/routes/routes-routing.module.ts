@@ -12,6 +12,8 @@ import { SplitBatchComponent } from './features/material/split-batch.component';
 import { OperationListComponent } from './features/operation/operationList.component';
 import { LogonOperationComponent } from './features/operation/logon-operation.component';
 import { RoutingGuard } from './routing-guard';
+import { GenerateOutputSemiBatchComponent } from './features/operation/generate-output-semi.component';
+import { GenerateOutputFGBatchComponent } from './features/operation/generate-output-fg.component';
 
 const routes: Routes = [
   {
@@ -22,6 +24,8 @@ const routes: Routes = [
       { path: 'material', component: MaterialListComponent},
       { path: 'machine', component: MachineListComponent},
       { path: 'operation/logon', component: LogonOperationComponent},
+      { path: 'operation/semiBatchGen', component: GenerateOutputSemiBatchComponent},
+      { path: 'operation/fgBatchGen', component: GenerateOutputFGBatchComponent},
       { path: 'material/create', component: CreateBatchComponent},
       { path: 'material/move', component: MoveBatchComponent},
       { path: 'material/split', component: SplitBatchComponent},

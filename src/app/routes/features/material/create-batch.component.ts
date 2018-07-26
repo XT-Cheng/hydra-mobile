@@ -65,7 +65,7 @@ export class CreateBatchComponent {
     // Fetch LT
     this._fetchService.getBatchInformation(result.licenseTag).pipe(
       switchMap(ret => {
-        if (ret.length !== 0) {
+        if (ret !==  null && ret.length !== 0) {
           result.isExecutingBapi = false;
           result.isFetchingLicenseTag = false;
           result.isSuccess = false;
@@ -76,7 +76,7 @@ export class CreateBatchComponent {
         return this._fetchService.getLicenseTag(result.licenseTag);
       }),
       switchMap(ret => {
-        if (ret.length === 0) {
+        if (ret !== null && ret.length === 0) {
           result.isExecutingBapi = false;
           result.isFetchingLicenseTag = false;
           result.isSuccess = false;
