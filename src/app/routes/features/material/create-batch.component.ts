@@ -90,7 +90,7 @@ export class CreateBatchComponent {
 
         // Update results
         result.message =
-          `批次: ${ret[0].LICENSETAG}, 料号: ${ret[0].PARTNO}, 数量: ${ret[0].QUANTITY}, 批次创建中...`;
+          `${ret[0].LICENSETAG}创建中...`;
         result.quantity = ret[0].QUANTITY;
         result.materialNumber = ret[0].PARTNO;
 
@@ -107,7 +107,7 @@ export class CreateBatchComponent {
 
       // Update results
       if (result.isSuccess) {
-        result.message = `批次: ${result.licenseTag}, 料号: ${result.materialNumber}, 数量: ${result.quantity}, 创建成功`;
+        result.message = `${result.licenseTag}创建成功`;
       } else {
         result.message = ret.description;
       }

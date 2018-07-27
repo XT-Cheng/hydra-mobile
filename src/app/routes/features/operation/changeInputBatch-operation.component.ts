@@ -5,19 +5,20 @@ import { Router, NavigationEnd } from '@angular/router';
 import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService, DialogService, DialogConfig, PopupComponent } from 'ngx-weui';
 import { filter, switchMap, map, tap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { NgForm } from '@angular/forms';
 
 @Component({
-  selector: 'operation-logon',
-  templateUrl: 'logon-operation.component.html',
-  styleUrls: ['./logon-operation.component.scss']
+  selector: 'operation-change-input-batch',
+  templateUrl: 'changeInputBatch-operation.component.html',
+  styleUrls: ['./changeInputBatch-operation.component.scss']
 })
-export class LogonOperationComponent {
+export class ChangeInputBatchComponent {
   @ViewChild('f') form: NgForm;
   @ViewChild('machine') machineElem: ElementRef;
   @ViewChild('batch') batchElem: ElementRef;
   @ViewChild('operator') operatorElem: ElementRef;
-  @ViewChild('nextOperation') nextOperationElem: ElementRef;
+  @ViewChild('currentOperation') currentOperationElem: ElementRef;
 
   machineInfo: any = {
     machine: '',
@@ -31,14 +32,15 @@ export class LogonOperationComponent {
     operator: ''
   };
 
-  componentsInfo: any = [];
+  componentsInfo: Array<any> = [];
+
   constructor(private _bapiService: BapiService, private _fetchService: FetchService,
     private _routeService: Router, private _titleService: TitleService,
     private _tipService: ToptipsService, private _toastService: ToastService) {
     this._routeService.events.pipe(
       filter((event) => event instanceof NavigationEnd)
     ).subscribe(() => {
-      this._titleService.setTitle(`工单登录`);
+      this._titleService.setTitle(`工单续料`);
     });
   }
 
@@ -68,16 +70,15 @@ export class LogonOperationComponent {
     }
 
     if (this.loadBatch.batchName === '') {
-      this.logonOP();
-    } else {
-      this.LogonInputBatch();
+      return;
     }
+
+    this.ChangeInputBatch();
   }
 
-  LogonInputBatch() {
+  ChangeInputBatch() {
     let found: any;
     let uploadBatch: any;
-
     this._toastService['loading']();
 
     this._fetchService.getBatchInformation(this.loadBatch.batchName).pipe(
@@ -103,10 +104,25 @@ export class LogonOperationComponent {
         }
 
         if (comp.INPUTBATCH && comp.INPUTBATCH !== '') {
-          throw Error(`物料${uploadBatch.MATERIALNUMBER}已经上载！`);
+          return this._bapiService.logoffBatch(this.machineInfo.currentOperation, this.machineInfo.machine, this.loadBatch.operator,
+            comp.INPUTBATCHID, 0).pipe(
+              tap(logOffResult => {
+                if (!logOffResult.isSuccess) {
+                  this._tipService['warn'](logOffResult.description);
+                  throw Error(logOffResult.description);
+                }
+              })
+            );
+        } else {
+          return of({
+            isSuccess: true,
+            error: '',
+            description: ''
+          });
         }
-
-        return this._bapiService.logonBatch(this.machineInfo.nextOperation, this.machineInfo.machine,
+      }),
+      switchMap(ret => {
+        return this._bapiService.logonBatch(this.machineInfo.currentOperation, this.machineInfo.machine,
           this.loadBatch.operator, uploadBatch.ID, uploadBatch.MATERIALNUMBER);
       }),
       tap(ret => {
@@ -116,9 +132,7 @@ export class LogonOperationComponent {
         }
       })
     ).subscribe(ret => {
-      found.INPUTBATCH = this.loadBatch.batchName;
-
-      const comp  = this.componentsInfo.find(c => c.MATERIAL === found.MATERIALNUMBER);
+      const comp = this.componentsInfo.find(c => c.MATERIAL === found.MATERIAL);
       comp.INPUTBATCH = found.INPUTBATCH;
       comp.INPUTBATCHID = found.INPUTBATCHID;
       comp.BATCHQTY = found.BATCHQTY;
@@ -156,31 +170,17 @@ export class LogonOperationComponent {
           this.machineInfo.description = `当前工单:${this.machineInfo.currentOperation === null ? '空' : this.machineInfo.currentOperation}`;
         }
 
-        return this._fetchService.getComponentOfOperation(this.machineInfo.nextOperation, this.machineInfo.machine);
+        return this._fetchService.getComponentOfOperation(this.machineInfo.currentOperation, this.machineInfo.machine);
       })
     ).subscribe((ret) => {
       this._toastService.hide();
       this.componentsInfo = ret;
 
-      if (this.isMissComponent()) {
-        this.batchElem.nativeElement.focus();
-      } else {
-        this.operatorElem.nativeElement.focus();
-      }
+      this.batchElem.nativeElement.focus();
     }, (error) => {
       this._toastService.hide();
       this.resetForm();
       this.machineElem.nativeElement.focus();
-    });
-  }
-
-  logonOP() {
-    this._toastService['loading']();
-    this._bapiService.logonOperation(this.machineInfo.nextOperation, this.machineInfo.machine,
-      this.loadBatch.operator).subscribe(ret => {
-        this._tipService['primary'](`工单${this.machineInfo.nextOperation}登录成功！`);
-        this._toastService.hide();
-        this.resetForm();
     });
   }
 
@@ -207,19 +207,7 @@ export class LogonOperationComponent {
   }
 
   isDisable() {
-    return this.machineInfo.currentOperation !== null || !this.form.valid || this.isMissComponent();
-  }
-
-  isMissComponent() {
-    let isMissing = false;
-    this.componentsInfo.forEach(c => {
-      if (c.INPUTBATCH === '') {
-        isMissing = true;
-        return;
-      }
-    });
-
-    return isMissing;
+    return this.machineInfo.currentOperation === null || !this.form.valid;
   }
 
   logoffBatch(comp) {

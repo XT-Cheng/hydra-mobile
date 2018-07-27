@@ -24,30 +24,36 @@ export class BapiService {
     }
 
     createBatch(batchName: string, materialNumber: string, batchQty: number,
-                    materialBuffer: string, badge: string): Observable<IBapiResult>  {
+        materialBuffer: string, badge: string): Observable<IBapiResult> {
         const data = new CreateBatch(batchName, materialNumber, batchQty, materialBuffer, badge);
         console.log(`Dialog String: ${data.dialogString()}`);
         return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() })
-        .pipe(
-            map((res: any) => {
-                return {
-                    isSuccess: res.isSuccess,
-                    error: res.error,
-                    description: res.description
-                };
-            })
-        );
+            .pipe(
+                map((res: any) => {
+                    return {
+                        isSuccess: res.isSuccess,
+                        error: res.error,
+                        description: res.description
+                    };
+                })
+            );
     }
 
     splitBatch(id: string, splitBatch: string, remainQty: number,
         splitQty: number, badge: string): Observable<IBapiResult> {
-        const copy = new CopyBatch(id, splitBatch, splitQty, badge);
-        const update = new UpdateBatch(id, badge, null, remainQty);
-        console.log(`Dialog String: ${copy.dialogString()}`);
-        console.log(`Dialog String: ${update.dialogString()}`);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: copy.dialogString() })
-        .pipe(
-            concatMap(() => {
+        const gen = new GenerateBatchName('W');
+
+        // Get new Batch as Output Batch
+        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: gen.dialogString() }).pipe(
+            switchMap((res: any) => {
+                const array: Array<string> = res.content.split('|');
+                const newBatchId = array.find((item: string) => item.search(`NR=`) > -1)
+                    .replace('NR=', '').trimRight();
+                const copy = new CopyBatch(id, newBatchId, splitBatch, splitQty, badge);
+                return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: copy.dialogString() });
+            }),
+            switchMap((res: any) => {
+                const update = new UpdateBatch(id, badge, null, remainQty);
                 return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: update.dialogString() });
             }),
             map((res: any) => {
@@ -64,15 +70,15 @@ export class BapiService {
         const data = new MoveBatch(id, destination, badge);
         console.log(`Dialog String: ${data.dialogString()}`);
         return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() })
-        .pipe(
-            map((res: any) => {
-                return {
-                    isSuccess: res.isSuccess,
-                    error: res.error,
-                    description: res.description
-                };
-            })
-        );
+            .pipe(
+                map((res: any) => {
+                    return {
+                        isSuccess: res.isSuccess,
+                        error: res.error,
+                        description: res.description
+                    };
+                })
+            );
     }
 
     logonBatch(operation: string, machineName: string, badgeName: string,
@@ -114,9 +120,9 @@ export class BapiService {
         return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: gen.dialogString() }).pipe(
             switchMap((res: any) => {
                 const array: Array<string> = res.content.split('|');
-                const newBatch = array.find((item: string) => item.search(`NR=`) > -1)
+                const newBatchId = array.find((item: string) => item.search(`NR=`) > -1)
                     .replace('NR=', '').trimRight();
-                const data = new LogonOperation(operation, machineName, badgeName, newBatch);
+                const data = new LogonOperation(operation, machineName, badgeName, newBatchId);
                 return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
             }),
             map((res: any) => {
@@ -130,7 +136,7 @@ export class BapiService {
     }
 
     generateOutputSemiBatch(operation: string, machineName: string, currentBatchId: string, batchName: string,
-                                badgeName: string, qty: number) {
+        badgeName: string, qty: number) {
         const gen = new GenerateBatchName('P');
 
         // Get new Batch as Output Batch
@@ -140,6 +146,33 @@ export class BapiService {
                 const newBatch = array.find((item: string) => item.search(`NR=`) > -1)
                     .replace('NR=', '').trimRight();
                 const data = new ChangeOutputBatch(operation, machineName, badgeName, newBatch, qty);
+                return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
+            }),
+            switchMap((res: any) => {
+                const data = new UpdateBatch(currentBatchId, badgeName, batchName, null);
+                return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
+            }),
+            map((res: any) => {
+                return {
+                    isSuccess: res.isSuccess,
+                    error: res.error,
+                    description: res.description
+                };
+            })
+        );
+    }
+
+    generateOutputFGBatch(operation: string, machineName: string, currentBatchId: string, batchName: string,
+        badgeName: string) {
+        const gen = new GenerateBatchName('P');
+
+        // Get new Batch as Output Batch
+        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: gen.dialogString() }).pipe(
+            switchMap((res: any) => {
+                const array: Array<string> = res.content.split('|');
+                const newBatch = array.find((item: string) => item.search(`NR=`) > -1)
+                    .replace('NR=', '').trimRight();
+                const data = new ChangeOutputBatch(operation, machineName, badgeName, newBatch, 1);
                 return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
             }),
             switchMap((res: any) => {

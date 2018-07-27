@@ -21,21 +21,18 @@ export class LayoutDefaultComponent {
   gotoOperation() {
     this._router.navigateByUrl('operation').then(() => {
       this._status = false;
-      this._titleService.setTitle('Operation');
     });
   }
 
   gotoMachine() {
     this._router.navigateByUrl('machine').then(() => {
       this._status = false;
-      this._titleService.setTitle('Machine');
     });
   }
 
   gotoMaterial() {
     this._router.navigateByUrl('material').then(() => {
       this._status = false;
-      this._titleService.setTitle('Machine');
     });
   }
 }

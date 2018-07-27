@@ -3,7 +3,7 @@ import { DialogTypeEnum } from '@core/hydra/bapi/constants';
 
 export class LogonOperation extends DialogBase {
     constructor(private operation: string, private machineName: string, private badgeName: string,
-        private batchName: string) {
+        private batchId: string) {
         super(DialogTypeEnum.LOGON_OPERATION);
     }
 
@@ -11,7 +11,8 @@ export class LogonOperation extends DialogBase {
         return `${super.dialogString()}` +
                 `ANR=${this.operation}|` +
                 `MNR=${this.machineName}|` +
-                `CNR=${this.batchName}|` +
+                `CNR=${this.batchId}|` +
+                `MST=200|` +
                 `KNR=${this.badgeName}|`;
     }
 }

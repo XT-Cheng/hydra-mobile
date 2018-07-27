@@ -16,11 +16,13 @@ import { MoveBatchComponent } from './features/material/move-batch.component';
 import { SplitBatchComponent } from './features/material/split-batch.component';
 import { GenerateOutputSemiBatchComponent } from './features/operation/generate-output-semi.component';
 import { GenerateOutputFGBatchComponent } from './features/operation/generate-output-fg.component';
+import { ChangeInputBatchComponent } from './features/operation/changeInputBatch-operation.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
   OperationListComponent,
   GenerateOutputSemiBatchComponent,
+  ChangeInputBatchComponent,
   GenerateOutputFGBatchComponent
 ];
 

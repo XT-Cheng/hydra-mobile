@@ -17,7 +17,6 @@ export class GenerateOutputFGBatchComponent {
     @ViewChild('machine') machineElem: ElementRef;
     @ViewChild('batchName') batchNameElem: ElementRef;
     @ViewChild('operator') operatorElem: ElementRef;
-    @ViewChild('batchQty') batchQtyElem: ElementRef;
 
     machineInfo: any = {
         machine: '',
@@ -28,7 +27,7 @@ export class GenerateOutputFGBatchComponent {
 
     outputBatch: any = {
         batchName: '',
-        batchQty: '',
+        batchQty: '1',
         operator: ''
     };
 
@@ -90,24 +89,6 @@ export class GenerateOutputFGBatchComponent {
             return;
         }
 
-        this.batchQtyElem.nativeElement.focus();
-    }
-
-    QuantityEntered() {
-        event.preventDefault();
-
-        if (this.machineInfo.machine === '') {
-            return;
-        }
-
-        if (this.outputBatch.batchName === '') {
-            return;
-        }
-
-        if (this.outputBatch.batchQty === '') {
-            return;
-        }
-
         this.operatorElem.nativeElement.focus();
     }
 
@@ -155,6 +136,7 @@ export class GenerateOutputFGBatchComponent {
             this._toastService.hide();
             this.resetForm();
         }, err => {
+            this._tipService['warn'](err);
             this._toastService.hide();
             this.resetForm();
         });

@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map, concatMap, combineLatest } from 'rxjs/operators';
+import { map, concatMap, combineLatest, delay } from 'rxjs/operators';
 import { WEBAPI_HOST } from '@core/constants';
 
 @Injectable()
@@ -18,6 +18,7 @@ export class FetchService {
             `WHERE CT_SLT_CARTON_LICENSE_TAG = '${licenseTag}'`;
         return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`)
             .pipe(
+                delay(3000),
                 map((res: any) => {
                     return res;
                 })
@@ -25,9 +26,12 @@ export class FetchService {
     }
 
     getBatchInformation(batchName: string): Observable<any> {
-        const sql = `SELECT ALTERN_LOSNR1 AS BATCHNAME, LOSNR AS ID, ARTIKEL AS MATERIALNUMBER, MENGE AS QUANTITY, ` +
-            `RESTMENGE AS REMAINQUANTITY, EINHEIT AS UNIT, MAT_PUF AS LOCATION, ` +
-            `STATUS AS STATUS, KLASSE AS CLASS FROM LOS_BESTAND WHERE ALTERN_LOSNR1 = '${batchName}'`;
+        const sql = `SELECT LOS_BESTAND.ALTERN_LOSNR1 AS BATCHNAME, LOS_BESTAND.LOSNR AS ID, ` +
+            `LOS_BESTAND.ARTIKEL AS MATERIALNUMBER, LOS_BESTAND.MENGE AS QUANTITY, ` +
+            `LOS_BESTAND.RESTMENGE AS REMAINQUANTITY, LOS_BESTAND.EINHEIT AS UNIT, ` +
+            `LOS_BESTAND.MAT_PUF AS LOCATION, MAT_PUFFER.BEZ AS LOCDESC, ` +
+            `STATUS AS STATUS, KLASSE AS CLASS FROM MAT_PUFFER, LOS_BESTAND ` +
+            `WHERE LOS_BESTAND.ALTERN_LOSNR1 = '${batchName}' AND MAT_PUFFER.MAT_PUF = LOS_BESTAND.MAT_PUF`;
         return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`)
             .pipe(
                 map((res: any) => {
@@ -84,15 +88,16 @@ export class FetchService {
             );
     }
 
-    getComponentOfOperation(operation: string): Observable<any> {
+    getComponentOfOperation(operation: string, machine: string): Observable<any> {
         const result = [];
 
         const compSql = `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS MATERIAL, SOLL_MENGE AS USAGE, SOLL_EINH AS UNIT, POS from MLST_HY ` +
             ` where AUFTRAG_NR ='${operation}' ORDER BY POS`;
 
-        const loadCompSql = `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY3 AS BATCH, SUBKEY5 AS POS, MENGE AS QTY, ` +
-            `RESTMENGE AS REMAINQTY FROM HYBUCH, LOS_BESTAND ` +
-            `WHERE KEY_TYPE = 'C' AND TYP = 'E' AND SUBKEY2 = '${operation}' AND SUBKEY3 = LOSNR`;
+        const loadCompSql = `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY3 AS BATCHID, ` +
+            `LOS_BESTAND.ALTERN_LOSNR1 AS BATCH, SUBKEY5 AS POS, MENGE AS QTY, ` +
+            `RESTMENGE AS REMAINQTY, LOS_BESTAND.ARTIKEL AS MATERIAL FROM HYBUCH, LOS_BESTAND ` +
+            `WHERE KEY_TYPE = 'C' AND TYP = 'E' AND SUBKEY1 = '${machine}' AND SUBKEY3 = LOSNR`;
 
         return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${compSql}`)
             .pipe(
@@ -106,6 +111,7 @@ export class FetchService {
                                 UNIT: c.UNIT,
                                 MATERIAL: c.MATERIAL,
                                 INPUTBATCH: '',
+                                INPUTBATCHID: '',
                                 BATCHQTY: '',
                                 ORIGINQTY: ''
                             });
@@ -114,9 +120,10 @@ export class FetchService {
 
                     if (loaded !== null) {
                         (<Array<any>>loaded).forEach(c => {
-                            const find = result.find(item => item.OPERATION === c.OPERATION && item.POSITION === c.POS);
+                            const find = result.find(item => item.MATERIAL === c.MATERIAL);
                             if (find) {
                                 find.INPUTBATCH = c.BATCH;
+                                find.INPUTBATCHID = c.BATCHID;
                                 find.BATCHQTY = c.REMAINQTY;
                                 find.ORIGINQTY = c.QTY;
                             }

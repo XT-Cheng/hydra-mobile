@@ -12,7 +12,7 @@ export enum DialogTypeEnum {
     CHANGE_OUTPUT_BATCH = 'CA_WL'
 }
 
-export const DIALOG_USER = 5500;
+export const DIALOG_USER = 2500;
 
 export interface IBapiResult {
     isSuccess: boolean;

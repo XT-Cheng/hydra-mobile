@@ -14,6 +14,7 @@ export class ChangeOutputBatch extends DialogBase {
                 `KNR=${this.badge}|` +
                 `EGR:GUT=${this.qty}|` +
                 `KLASSE=G|` +
+                // `ZLO=|` +
                 `MNR=${this.machine}|`;
     }
 }

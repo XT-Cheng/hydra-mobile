@@ -14,6 +14,7 @@ import { LogonOperationComponent } from './features/operation/logon-operation.co
 import { RoutingGuard } from './routing-guard';
 import { GenerateOutputSemiBatchComponent } from './features/operation/generate-output-semi.component';
 import { GenerateOutputFGBatchComponent } from './features/operation/generate-output-fg.component';
+import { ChangeInputBatchComponent } from './features/operation/changeInputBatch-operation.component';
 
 const routes: Routes = [
   {
@@ -26,6 +27,7 @@ const routes: Routes = [
       { path: 'operation/logon', component: LogonOperationComponent},
       { path: 'operation/semiBatchGen', component: GenerateOutputSemiBatchComponent},
       { path: 'operation/fgBatchGen', component: GenerateOutputFGBatchComponent},
+      { path: 'operation/changeInputBatch', component: ChangeInputBatchComponent},
       { path: 'material/create', component: CreateBatchComponent},
       { path: 'material/move', component: MoveBatchComponent},
       { path: 'material/split', component: SplitBatchComponent},

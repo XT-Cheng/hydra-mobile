@@ -84,7 +84,7 @@ export class MoveBatchComponent {
       this._toastService.hide();
     },
       error => {
-        console.log(error);
+        this._tipService['warn'](error);
         this._toastService.hide();
       });
   }
@@ -112,7 +112,7 @@ export class MoveBatchComponent {
         this.resetForm();
       } else {
         this.data.id = ret[0].ID;
-        this.info = `批次：${ret[0].BATCHNAME},当前位置: ${ret[0].LOCATION}, 数量：${ret[0].QUANTITY}`;
+        this.info = `批次：${ret[0].BATCHNAME},当前位置: ${ret[0].LOCDESC}, 数量：${ret[0].REMAINQUANTITY}`;
         this.materialBufferElem.nativeElement.focus();
       }
     });
