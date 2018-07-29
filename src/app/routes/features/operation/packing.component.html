@@ -1,0 +1,43 @@
+<form #f="ngForm">
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">序列号</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #serialNumber shareAutoFocus name="serialNumber" (keydown.enter)='SerialNumberEntered($event)' [(ngModel)]='data.serialNumber'
+          placeholder="请输入序列号">
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">箱号</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #box name="box" (keydown.enter)='BoxEntered($event)' [(ngModel)]='data.box' placeholder="请输入箱号">
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">操作人员</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='data.operator'
+          placeholder="请输入操作人员" weui-required required>
+      </div>
+    </div>
+    <div class="weui-cells__title">序列号列表</div>
+    <div class="weui-cells">
+      <div *ngFor='let sn of serialNumbers' class="weui-cell weui-cell_access" (click)='RemoveSerialNumber(sn)'>
+        <div class="weui-cell__hd">
+          <i style='display: block;' [ngClass]='getResultClass(sn)'></i>
+        </div>
+        <div class="weui-cell__bd">
+          <p>{{sn.serialNumber}}</p>
+        </div>
+        <div class="weui-cell__ft">{{SerialNumberDescription(sn)}}</div>
+      </div>
+    </div>
+    <button weui-button [disabled]='isDisable()' (click)='Packing()'>包装</button>
+  </div>
+</form>

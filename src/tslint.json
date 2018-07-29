@@ -20,7 +20,8 @@
                 "operation",
                 "machine",
                 "material",
-                "batch"
+                "batch",
+                "packing"
             ],
             "kebab-case"
         ]

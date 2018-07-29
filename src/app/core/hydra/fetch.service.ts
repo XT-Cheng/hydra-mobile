@@ -27,7 +27,8 @@ export class FetchService {
 
     getBatchInformation(batchName: string): Observable<any> {
         const sql = `SELECT LOS_BESTAND.ALTERN_LOSNR1 AS BATCHNAME, LOS_BESTAND.LOSNR AS ID, ` +
-            `LOS_BESTAND.ARTIKEL AS MATERIALNUMBER, LOS_BESTAND.MENGE AS QUANTITY, ` +
+            `LOS_BESTAND.HZ_TYP AS MATERIALTYPE, ` +
+            `LOS_BESTAND.ARTIKEL AS MATERIALNUMBER, LOS_BESTAND.ARTIKEL_BEZ AS MATERIALDESC, LOS_BESTAND.MENGE AS QUANTITY, ` +
             `LOS_BESTAND.RESTMENGE AS REMAINQUANTITY, LOS_BESTAND.EINHEIT AS UNIT, ` +
             `LOS_BESTAND.MAT_PUF AS LOCATION, MAT_PUFFER.BEZ AS LOCDESC, ` +
             `STATUS AS STATUS, KLASSE AS CLASS FROM MAT_PUFFER, LOS_BESTAND ` +
@@ -91,8 +92,8 @@ export class FetchService {
     getComponentOfOperation(operation: string, machine: string): Observable<any> {
         const result = [];
 
-        const compSql = `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS MATERIAL, SOLL_MENGE AS USAGE, SOLL_EINH AS UNIT, POS from MLST_HY ` +
-            ` where AUFTRAG_NR ='${operation}' ORDER BY POS`;
+        const compSql = `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS MATERIAL, SOLL_MENGE AS USAGE, SOLL_EINH AS UNIT, POS FROM MLST_HY ` +
+            ` WHERE AUFTRAG_NR ='${operation}' ORDER BY POS`;
 
         const loadCompSql = `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY3 AS BATCHID, ` +
             `LOS_BESTAND.ALTERN_LOSNR1 AS BATCH, SUBKEY5 AS POS, MENGE AS QTY, ` +
@@ -133,5 +134,20 @@ export class FetchService {
                     return result;
                 })
             );
+    }
+
+    getOperation(operation: string) {
+        const result: any = {};
+
+        const operationSql = `SELECT AUFTRAG_NR AS OPERATION, AG_BEZ AS MATERIALDESCRIPTION ` +
+                    ` FROM AUFTRAGS_BESTAND WHERE AUFTRAG_NR = '${operation}'`;
+
+        console.log(operationSql);
+        return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${operationSql}`)
+        .pipe(
+            map((res: any) => {
+                return res;
+            })
+        );
     }
 }

@@ -85,7 +85,7 @@ export class SplitBatchComponent {
 
         // Split Batch
         result.isExecutingBapi = true;
-        return this._bapiService.splitBatch(result.id, result.splittedBatch, result.remainQty,
+        return this._bapiService.splitBatch(result.id, result.licenseTag, result.splittedBatch, result.remainQty,
           result.splittedQty, result.operator);
       })).subscribe(ret => {
         // Set Status
@@ -131,7 +131,7 @@ export class SplitBatchComponent {
         this.resetForm();
       } else {
         this.data.id = ret[0].ID;
-        this.data.qty = ret[0].QUANTITY;
+        this.data.qty = ret[0].REMAINQUANTITY;
         this.info = `批次：${ret[0].BATCHNAME},当前位置: ${ret[0].LOCDESC}, 数量：${ret[0].REMAINQUANTITY}`;
         this.splittedBatchElem.nativeElement.focus();
       }

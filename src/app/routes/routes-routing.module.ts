@@ -15,6 +15,9 @@ import { RoutingGuard } from './routing-guard';
 import { GenerateOutputSemiBatchComponent } from './features/operation/generate-output-semi.component';
 import { GenerateOutputFGBatchComponent } from './features/operation/generate-output-fg.component';
 import { ChangeInputBatchComponent } from './features/operation/changeInputBatch-operation.component';
+import { InterruptOperationComponent } from './features/operation/interrupt-operation.component';
+import { LogoffOperationComponent } from './features/operation/logoff-operation.component';
+import { PackingComponent } from './features/operation/packing.component';
 
 const routes: Routes = [
   {
@@ -28,6 +31,9 @@ const routes: Routes = [
       { path: 'operation/semiBatchGen', component: GenerateOutputSemiBatchComponent},
       { path: 'operation/fgBatchGen', component: GenerateOutputFGBatchComponent},
       { path: 'operation/changeInputBatch', component: ChangeInputBatchComponent},
+      { path: 'operation/interrupt', component: InterruptOperationComponent},
+      { path: 'operation/logoff', component: LogoffOperationComponent},
+      { path: 'operation/packing', component: PackingComponent},
       { path: 'material/create', component: CreateBatchComponent},
       { path: 'material/move', component: MoveBatchComponent},
       { path: 'material/split', component: SplitBatchComponent},

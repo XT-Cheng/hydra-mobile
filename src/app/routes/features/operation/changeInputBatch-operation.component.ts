@@ -117,17 +117,17 @@ export class ChangeInputBatchComponent {
           return of({
             isSuccess: true,
             error: '',
-            description: ''
+            description: '',
+            content: ''
           });
         }
       }),
       switchMap(ret => {
         return this._bapiService.logonBatch(this.machineInfo.currentOperation, this.machineInfo.machine,
-          this.loadBatch.operator, uploadBatch.ID, uploadBatch.MATERIALNUMBER);
+          this.loadBatch.operator, uploadBatch.ID, uploadBatch.MATERIALNUMBER, found.POSITION);
       }),
       tap(ret => {
         if (!ret.isSuccess) {
-          this._tipService['warn'](ret.description);
           throw Error(ret.description);
         }
       })
@@ -141,6 +141,8 @@ export class ChangeInputBatchComponent {
       this.loadBatch = {};
       this.batchElem.nativeElement.focus();
     }, error => {
+      this._tipService['warn'](error);
+
       this.loadBatch.batchName = '';
       this.loadBatch.operator = '';
       this._toastService.hide();
@@ -220,6 +222,7 @@ export class ChangeInputBatchComponent {
           this.batchElem.nativeElement.focus();
         } else {
           comp.INPUTBATCH = '';
+          comp.INPUTBATCHID = '';
           comp.BATCHQTY = '';
         }
         this._toastService.hide();

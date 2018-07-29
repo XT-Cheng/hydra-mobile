@@ -1,0 +1,31 @@
+<form #f="ngForm">
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">设备</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #machine shareAutoFocus name="machine" (keydown.enter)='MachineEntered($event)' [(ngModel)]='machineInfo.machine'
+          placeholder="请输入设备" weui-required>
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">当前工单</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" name="currentOperation" #currentOperation [(ngModel)]='machineInfo.currentOperation' disabled placeholder="当前工单">
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">操作人员</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='data.operator'
+          placeholder="请输入操作人员" weui-required required>
+      </div>
+    </div>
+    <button weui-button [disabled]='isDisable()' (click)='interruptOperation()'>中断工单</button>
+  </div>
+</form>

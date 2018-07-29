@@ -17,13 +17,19 @@ import { SplitBatchComponent } from './features/material/split-batch.component';
 import { GenerateOutputSemiBatchComponent } from './features/operation/generate-output-semi.component';
 import { GenerateOutputFGBatchComponent } from './features/operation/generate-output-fg.component';
 import { ChangeInputBatchComponent } from './features/operation/changeInputBatch-operation.component';
+import { InterruptOperationComponent } from './features/operation/interrupt-operation.component';
+import { LogoffOperationComponent } from './features/operation/logoff-operation.component';
+import { PackingComponent } from './features/operation/packing.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
   OperationListComponent,
   GenerateOutputSemiBatchComponent,
   ChangeInputBatchComponent,
-  GenerateOutputFGBatchComponent
+  GenerateOutputFGBatchComponent,
+  InterruptOperationComponent,
+  LogoffOperationComponent,
+  PackingComponent
 ];
 
 const MACHINE_COMPONENTS = [

@@ -107,26 +107,30 @@ export class LogonOperationComponent {
         }
 
         return this._bapiService.logonBatch(this.machineInfo.nextOperation, this.machineInfo.machine,
-          this.loadBatch.operator, uploadBatch.ID, uploadBatch.MATERIALNUMBER);
+          this.loadBatch.operator, uploadBatch.ID, uploadBatch.MATERIALNUMBER, comp.POSITION);
       }),
-      tap(ret => {
+      tap((ret: any) => {
         if (!ret.isSuccess) {
-          this._tipService['warn'](ret.description);
           throw Error(ret.description);
         }
       })
     ).subscribe(ret => {
-      found.INPUTBATCH = this.loadBatch.batchName;
-
-      const comp  = this.componentsInfo.find(c => c.MATERIAL === found.MATERIALNUMBER);
+      const comp  = this.componentsInfo.find(c => c.MATERIAL === found.MATERIAL);
       comp.INPUTBATCH = found.INPUTBATCH;
       comp.INPUTBATCHID = found.INPUTBATCHID;
       comp.BATCHQTY = found.BATCHQTY;
 
       this._toastService.hide();
       this.loadBatch = {};
-      this.batchElem.nativeElement.focus();
+
+      if (this.isMissComponent()) {
+        this.batchElem.nativeElement.focus();
+      } else {
+        this.operatorElem.nativeElement.focus();
+      }
     }, error => {
+      this._tipService['warn'](error);
+
       this.loadBatch.batchName = '';
       this.loadBatch.operator = '';
       this._toastService.hide();
@@ -225,13 +229,14 @@ export class LogonOperationComponent {
   logoffBatch(comp) {
     this._toastService['loading']();
     this._bapiService.logoffBatch(this.machineInfo.nextOperation, this.machineInfo.machine, '20120821',
-      comp.INPUTBATCH, 0).subscribe(ret => {
+      comp.INPUTBATCHID, 0).subscribe(ret => {
         if (!ret.isSuccess) {
           this._tipService['warn'](ret.description);
           this.loadBatch = {};
           this.batchElem.nativeElement.focus();
         } else {
           comp.INPUTBATCH = '';
+          comp.INPUTBATCHID = '';
           comp.BATCHQTY = '';
         }
         this._toastService.hide();
