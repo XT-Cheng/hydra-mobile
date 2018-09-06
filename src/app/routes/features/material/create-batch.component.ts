@@ -152,6 +152,10 @@ export class CreateBatchComponent {
       } else {
         this.materialBufferElem.nativeElement.focus();
       }
+    }, err => {
+      this._toastService.hide();
+      this._tipService['warn'](`Error: ${err}！`);
+      this.resetForm();
     });
   }
 
@@ -179,6 +183,10 @@ export class CreateBatchComponent {
           this.bufferInfo = `Storage: ${ret[0].DESCRIPTION}`;
           this.operatorElem.nativeElement.focus();
         }
+      }, err => {
+        this._toastService.hide();
+        this._tipService['warn'](`Error: ${err}！`);
+        this.resetForm();
       });
   }
 
@@ -206,8 +214,12 @@ export class CreateBatchComponent {
         this.resetForm();
       } else {
         this.operatorInfo = `Operator ${ret[0].NAME}`;
-        // this.createBatch();
+        this.createBatch();
       }
+    }, err => {
+      this._toastService.hide();
+      this._tipService['warn'](`Error: ${err}！`);
+      this.resetForm();
     });
   }
 

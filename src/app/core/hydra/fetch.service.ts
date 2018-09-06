@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, concatMap, combineLatest, delay } from 'rxjs/operators';
 import { WEBAPI_HOST } from '@core/constants';
 
@@ -42,6 +42,9 @@ export class FetchService {
 
   getLicenseTagFrom2DBarCode(barCodeOf2D: string): Observable<any> {
     const ret = barCodeOf2D.split(';');
+
+    if (ret.length !== 3) { return throwError('LicenseTag format in-correct'); }
+
     return of(
       {
         BATCHNAME: ret[0],

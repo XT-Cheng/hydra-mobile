@@ -1,7 +1,7 @@
 import { Component, HostBinding, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
 import { FetchService } from '@core/hydra/fetch.service';
-import { filter } from 'rxjs/operators';
+import { filter, switchMap } from 'rxjs/operators';
 import { NgForm } from '@angular/forms';
 import { ToptipsService, ToastService } from 'ngx-weui';
 import { TitleService } from '@core/title.service';
@@ -23,13 +23,15 @@ export class MoveBatchComponent {
   @ViewChild('f') form: NgForm;
 
   data: any = {
-    id: '',
     licenseTag: '',
+    batchName: '',
     materialBuffer: '',
     operator: ''
   };
 
-  info: string;
+  batchInfo: string;
+  bufferInfo: string;
+  operatorInfo: string;
 
   results: any[] = [];
 
@@ -39,19 +41,18 @@ export class MoveBatchComponent {
     this._routeService.events.pipe(
       filter((event) => event instanceof NavigationEnd)
     ).subscribe(() => {
-        this._titleService.setTitle(`批次转移`);
-      });
+      this._titleService.setTitle(`Move Batch`);
+    });
   }
 
   moveBatch() {
     const result = {
-      id: this.data.id,
-      licenseTag: this.data.licenseTag,
+      batchName: this.data.batchName,
       materialBuffer: this.data.materialBuffer,
-      message: '转移批次...',
       isExecutingBapi: false,
       operator: this.data.operator,
       isSuccess: false,
+      message: '',
       timeStamp: new Date()
     };
 
@@ -68,7 +69,7 @@ export class MoveBatchComponent {
 
     // Move Batch
     result.isExecutingBapi = true;
-    this._bapiService.moveBatch(result.id, result.materialBuffer, result.operator).subscribe(ret => {
+    this._bapiService.moveBatch(result.batchName, result.materialBuffer, result.operator).subscribe(ret => {
       // Set Status
       result.isExecutingBapi = false;
 
@@ -76,7 +77,7 @@ export class MoveBatchComponent {
 
       // Update results
       if (result.isSuccess) {
-        result.message = `批次: ${result.licenseTag} 转移成功`;
+        result.message = `Batch: ${result.batchName} moved`;
       } else {
         result.message = ret.description;
       }
@@ -92,7 +93,9 @@ export class MoveBatchComponent {
   resetForm() {
     this.form.reset();
     this.data = {};
-    this.info = '';
+    this.batchInfo = '';
+    this.operatorInfo = '';
+    this.bufferInfo = '';
 
     this.licenseTagElem.nativeElement.focus();
   }
@@ -105,16 +108,24 @@ export class MoveBatchComponent {
 
     this._toastService['loading']();
 
-    this._fetchService.getBatchInformation(this.data.licenseTag).subscribe((ret) => {
+    this._fetchService.getLicenseTagFrom2DBarCode(this.data.licenseTag).pipe(
+      switchMap(ret => {
+        return this._fetchService.getBatchInformation(ret.BATCHNAME);
+      })
+    ).subscribe((ret) => {
       this._toastService.hide();
       if (ret === null || ret.length === 0) {
-        this._tipService['warn'](`批次${this.data.licenseTag}不存在！`);
+        this._tipService['warn'](`Batch ${this.data.batchName} not exsit！`);
         this.resetForm();
       } else {
-        this.data.id = ret[0].ID;
-        this.info = `批次：${ret[0].BATCHNAME},当前位置: ${ret[0].LOCDESC}, 数量：${ret[0].REMAINQUANTITY}`;
+        this.data.batchName = ret[0].BATCHNAME;
+        this.batchInfo = `Batch: ${ret[0].BATCHNAME},Current Loc.: ${ret[0].LOCDESC}, Qty：${ret[0].REMAINQUANTITY}`;
         this.materialBufferElem.nativeElement.focus();
       }
+    }, err => {
+      this._toastService.hide();
+      this._tipService['warn'](`Error: ${err}！`);
+      this.resetForm();
     });
   }
 
@@ -129,7 +140,24 @@ export class MoveBatchComponent {
       return;
     }
 
-    this.operatorElem.nativeElement.focus();
+    this._toastService['loading']();
+
+    this._fetchService
+      .getMaterialBuffer(this.data.materialBuffer)
+      .subscribe(ret => {
+        this._toastService.hide();
+        if (ret === null || ret.length === 0) {
+          this._tipService['warn'](`Storage ${this.data.materialBuffer} not exist！`);
+          this.resetForm();
+        } else {
+          this.bufferInfo = `Storage: ${ret[0].DESCRIPTION}`;
+          this.operatorElem.nativeElement.focus();
+        }
+      }, err => {
+        this._toastService.hide();
+        this._tipService['warn'](`Error: ${err}！`);
+        this.resetForm();
+      });
   }
 
   OperatorEntered(event) {
@@ -147,7 +175,22 @@ export class MoveBatchComponent {
       return;
     }
 
-    this.moveBatch();
+    this._toastService['loading']();
+
+    this._fetchService.getOperator(this.data.operator).subscribe(ret => {
+      this._toastService.hide();
+      if (ret === null || ret.length === 0) {
+        this._tipService['warn'](`Operator ${this.data.operator} not exist！`);
+        this.resetForm();
+      } else {
+        this.operatorInfo = `Operator ${ret[0].NAME}`;
+        this.moveBatch();
+      }
+    }, err => {
+      this._toastService.hide();
+      this._tipService['warn'](`Error: ${err}！`);
+      this.resetForm();
+    });
   }
 
   getResultClass(result) {
