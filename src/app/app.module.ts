@@ -1,6 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, APP_INITIALIZER } from '@angular/core';
-import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
 import { WeUiModule, ToastConfig } from 'ngx-weui';
@@ -21,10 +20,10 @@ export function toastConfig() {
   return Object.assign(new ToastConfig(),
     {
       success: {
-        text: '已完成', icon: 'weui-icon-success-no-circle', time: 0
+        text: 'Successed', icon: 'weui-icon-success-no-circle', time: 0
       },
       loading: {
-        text: '执行中…', icon: 'weui-loading', time: 0
+        text: 'Loading…', icon: 'weui-loading', time: 0
       }
     });
 }
@@ -43,7 +42,6 @@ export function toastConfig() {
     BrowserAnimationsModule,
     IonicStorageModule.forRoot(),
     SharedModule,
-    // RouterModule,
     RoutesModule
   ],
   providers: [
