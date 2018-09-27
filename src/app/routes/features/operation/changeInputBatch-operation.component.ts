@@ -5,7 +5,7 @@ import { Router, NavigationEnd } from '@angular/router';
 import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService, DialogService, DialogConfig, PopupComponent } from 'ngx-weui';
 import { filter, switchMap, map, tap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { NgForm } from '@angular/forms';
 
 @Component({
@@ -22,7 +22,8 @@ export class ChangeInputBatchComponent {
 
   machineInfo: any = {
     machine: '',
-    description: '',
+    currentOPDescription: '',
+    nextOPDescription: '',
     currentOperation: '',
     nextOperation: ''
   };
@@ -32,7 +33,15 @@ export class ChangeInputBatchComponent {
     operator: ''
   };
 
+  toBeLoadedBatch: any = {
+    materialNumber: '',
+    batchName: '',
+    quantity: '',
+    description: '',
+  };
+
   componentsInfo: Array<any> = [];
+  operatorInfo: any;
 
   constructor(private _bapiService: BapiService, private _fetchService: FetchService,
     private _routeService: Router, private _titleService: TitleService,
@@ -40,7 +49,7 @@ export class ChangeInputBatchComponent {
     this._routeService.events.pipe(
       filter((event) => event instanceof NavigationEnd)
     ).subscribe(() => {
-      this._titleService.setTitle(`工单续料`);
+      this._titleService.setTitle(`Replenish Mat.`);
     });
   }
 
@@ -55,37 +64,13 @@ export class ChangeInputBatchComponent {
       return;
     }
 
-    this.operatorElem.nativeElement.focus();
-  }
-
-  OperatorEntered(event) {
-    event.preventDefault();
-
-    if (this.machineInfo.machine === '') {
-      return;
-    }
-
-    if (this.loadBatch.operator === '') {
-      return;
-    }
-
-    if (this.loadBatch.batchName === '') {
-      return;
-    }
-
-    this.ChangeInputBatch();
-  }
-
-  ChangeInputBatch() {
     let found: any;
     let uploadBatch: any;
-    this._toastService['loading']();
 
     this._fetchService.getBatchInformation(this.loadBatch.batchName).pipe(
-      switchMap(ret => {
+      map(ret => {
         if (ret === null || ret.length === 0) {
-          this._tipService['warn'](`批次${this.loadBatch.batchName}不存在！`);
-          throw Error(`批次${this.loadBatch.batchName}不存在！`);
+          throw Error(`Batch ${this.loadBatch.batchName} not exist!`);
         }
 
         uploadBatch = ret[0];
@@ -100,7 +85,84 @@ export class ChangeInputBatchComponent {
               INPUTBATCHID: uploadBatch.ID
             });
         } else {
-          throw Error(`批次${this.loadBatch.batchName}不可用于此工单！`);
+          throw Error(`Batch ${this.loadBatch.batchName} not allowed ！`);
+        }
+      })
+    ).subscribe(_ => {
+      this.toBeLoadedBatch.quantity = found.BATCHQTY;
+      this.toBeLoadedBatch.batchName = found.INPUTBATCH;
+      this.toBeLoadedBatch.materialNumber = found.MATERIAL;
+      this.toBeLoadedBatch.description = `Batch: ${this.toBeLoadedBatch.batchName}, ` +
+        `Material: ${this.toBeLoadedBatch.materialNumber}, Qty: ${this.toBeLoadedBatch.quantity}`;
+
+      this.loadBatch = {};
+
+      this._toastService.hide();
+
+      this.operatorElem.nativeElement.focus();
+    }, error => {
+      this._tipService['warn'](error);
+
+      this.loadBatch = {};
+      this._toastService.hide();
+
+      this.batchElem.nativeElement.focus();
+    });
+  }
+
+  OperatorEntered(event) {
+    event.preventDefault();
+
+    if (this.machineInfo.machine === '') {
+      return;
+    }
+
+    if (this.loadBatch.operator === '') {
+      return;
+    }
+
+    this._toastService['loading']();
+
+    this._fetchService.getOperator(this.loadBatch.operator).subscribe(ret => {
+      this._toastService.hide();
+      if (ret === null || ret.length === 0) {
+        this._tipService['warn'](`Operator ${this.loadBatch.operator} not exist！`);
+        this.resetForm();
+      } else {
+        this.operatorInfo = `Operator ${ret[0].NAME}`;
+        // this.ChangeInputBatch();
+      }
+    }, err => {
+      this._toastService.hide();
+      this._tipService['warn'](`Error: ${err}！`);
+      this.resetForm();
+    });
+  }
+
+  ChangeInputBatch() {
+    let found: any;
+    let uploadBatch: any;
+    this._toastService['loading']();
+
+    this._fetchService.getBatchInformation(this.toBeLoadedBatch.batchName).pipe(
+      switchMap(ret => {
+        if (ret === null || ret.length === 0) {
+          return throwError(`Batch ${this.toBeLoadedBatch.batchName} not exist！`);
+        }
+
+        uploadBatch = ret[0];
+
+        const comp = this.componentsInfo.find(c => c.MATERIAL === uploadBatch.MATERIALNUMBER);
+
+        if (comp) {
+          found = Object.assign({}, comp,
+            {
+              BATCHQTY: uploadBatch.REMAINQUANTITY,
+              INPUTBATCH: uploadBatch.BATCHNAME,
+              INPUTBATCHID: uploadBatch.ID
+            });
+        } else {
+          return throwError(`Batch ${this.toBeLoadedBatch.batchName} is not allowed`);
         }
 
         if (comp.INPUTBATCH && comp.INPUTBATCH !== '') {
@@ -108,8 +170,7 @@ export class ChangeInputBatchComponent {
             comp.INPUTBATCHID, 0).pipe(
               tap(logOffResult => {
                 if (!logOffResult.isSuccess) {
-                  this._tipService['warn'](logOffResult.description);
-                  throw Error(logOffResult.description);
+                  return throwError(logOffResult.description);
                 }
               })
             );
@@ -128,7 +189,7 @@ export class ChangeInputBatchComponent {
       }),
       tap(ret => {
         if (!ret.isSuccess) {
-          throw Error(ret.description);
+          return throwError(ret.description);
         }
       })
     ).subscribe(ret => {
@@ -143,8 +204,8 @@ export class ChangeInputBatchComponent {
     }, error => {
       this._tipService['warn'](error);
 
-      this.loadBatch.batchName = '';
-      this.loadBatch.operator = '';
+      this.toBeLoadedBatch = this.loadBatch = {};
+      this.operatorInfo = '';
       this._toastService.hide();
 
       this.batchElem.nativeElement.focus();
@@ -163,24 +224,32 @@ export class ChangeInputBatchComponent {
     this._fetchService.getMachineWithOperation(this.machineInfo.machine).pipe(
       switchMap((ret) => {
         if (!ret.MACHINE) {
-          this._tipService['warn'](`设备${this.machineInfo.machine}不存在！`);
-          throw Error(`设备${this.machineInfo.machine}不存在！`);
+          return throwError(`Machine ${this.machineInfo.machine} not exist!`);
+        } else if (!ret.CURRENTOPERATION) {
+          return throwError(`Machine ${this.machineInfo.machine} has no OP logged on!`);
         } else {
           this.machineInfo.machine = ret.MACHINE;
           this.machineInfo.currentOperation = ret.CURRENTOPERATION;
           this.machineInfo.nextOperation = ret.NEXTOPERATION;
-          this.machineInfo.description = `当前工单:${this.machineInfo.currentOperation === null ? '空' : this.machineInfo.currentOperation}`;
+          this.machineInfo.currentOPDescription = `Current OP: ${ret.CURRENTOPERATION === null ?
+            `N/A` : ret.CURRENTMOTHEROPERTAION + ` / ` + ret.CURRENTOPERATION}`;
+          this.machineInfo.nextOPDescription = `Next OP: ${ret.NEXTOPERATION === null ?
+            `N/A` : ret.NEXTMOTHEROPERATION + ` / ` + ret.NEXTOPERATION}`;
         }
 
         return this._fetchService.getComponentOfOperation(this.machineInfo.currentOperation, this.machineInfo.machine);
       })
     ).subscribe((ret) => {
+      ret = ret.sort((a, b) => {
+        return (a.BATCHQTY - b.BATCHQTY);
+      });
       this._toastService.hide();
       this.componentsInfo = ret;
 
       this.batchElem.nativeElement.focus();
     }, (error) => {
       this._toastService.hide();
+      this._tipService['warn'](error);
       this.resetForm();
       this.machineElem.nativeElement.focus();
     });
@@ -203,7 +272,8 @@ export class ChangeInputBatchComponent {
 
   resetForm() {
     this.form.reset();
-    this.machineInfo = {};
+    this.machineInfo = this.loadBatch = this.toBeLoadedBatch = {};
+    this.operatorInfo = '';
     this.componentsInfo = [];
     this.machineElem.nativeElement.focus();
   }
@@ -233,7 +303,7 @@ export class ChangeInputBatchComponent {
     if (comp.INPUTBATCH === ``) {
       return ``;
     } else {
-      return `批次:${comp.INPUTBATCH},当前数量：${comp.BATCHQTY}`;
+      return `Batch:${comp.INPUTBATCH},Qty: ${comp.BATCHQTY}`;
     }
   }
 }

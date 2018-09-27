@@ -2,39 +2,47 @@
   <div class="weui-cells weui-cells_form">
     <div class="weui-cell">
       <div class="weui-cell__hd">
-        <label class="weui-label">设备</label>
+        <label class="weui-label">Machine</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #machine shareAutoFocus name="machine" (keydown.enter)='MachineEntered($event)' [(ngModel)]='machineInfo.machine'
-          placeholder="请输入设备" weui-required>
+        <input class="weui-input" #machine shareAutoFocus name="machine" (keydown.enter)='MachineEntered($event)'
+          [(ngModel)]='machineInfo.machine' placeholder="Pls input Machine" weui-required>
       </div>
     </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{machineInfo.nextOPDescription}}
+      </span>
+    </label>
     <div class="weui-cell">
       <div class="weui-cell__hd">
-        <label class="weui-label">当前工单</label>
+        <label class="weui-label">Batch</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" name="currentOperation" #currentOperation [(ngModel)]='machineInfo.currentOperation' disabled placeholder="当前工单">
+        <input class="weui-input" #batch name="batch" (keydown.enter)='BatchEntered($event)' [(ngModel)]='loadBatch.batchName'
+          placeholder="Pls input Batch">
       </div>
     </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{toBeLoadedBatch.description}}
+      </span>
+    </label>
     <div class="weui-cell">
       <div class="weui-cell__hd">
-        <label class="weui-label">批次</label>
-      </div>
-      <div class="weui-cell__bd">
-        <input class="weui-input" #batch name="batch" (keydown.enter)='BatchEntered($event)' [(ngModel)]='loadBatch.batchName' placeholder="请输入物料批次">
-      </div>
-    </div>
-    <div class="weui-cell">
-      <div class="weui-cell__hd">
-        <label class="weui-label">操作人员</label>
+        <label class="weui-label">Operator</label>
       </div>
       <div class="weui-cell__bd">
         <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='loadBatch.operator'
-          placeholder="请输入操作人员" weui-required required>
+          placeholder="Pls input Operator" weui-required required>
       </div>
     </div>
-    <div class="weui-cells__title">物料列表</div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{operatorInfo}}
+      </span>
+    </label>
+    <div class="weui-cells__title">Mat. List</div>
     <div class="weui-cells">
       <div *ngFor='let comp of componentsInfo' class="weui-cell weui-cell_access" (click)='logoffBatch(comp)'>
         <div class="weui-cell__hd">
@@ -46,6 +54,7 @@
         <div class="weui-cell__ft">{{compDescription(comp)}}</div>
       </div>
     </div>
-    <button weui-button [disabled]='isDisable()' (click)='ChangeInputBatch()'>续料</button>
+    <button weui-button [disabled]='isDisable()' (click)='ChangeInputBatch()'>Replenish</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>

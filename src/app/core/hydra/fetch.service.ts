@@ -26,13 +26,13 @@ export class FetchService {
 
   getBatchInformation(batchName: string): Observable<any> {
     const sql =
-      `SELECT LOS_BESTAND.ALTERN_LOSNR1 AS BATCHNAME, LOS_BESTAND.LOSNR AS ID, ` +
+      `SELECT LOS_BESTAND.LOSNR AS BATCHNAME, LOS_BESTAND.LOSNR AS ID, ` +
       `LOS_BESTAND.HZ_TYP AS MATERIALTYPE, ` +
       `LOS_BESTAND.ARTIKEL AS MATERIALNUMBER, LOS_BESTAND.ARTIKEL_BEZ AS MATERIALDESC, LOS_BESTAND.MENGE AS QUANTITY, ` +
       `LOS_BESTAND.RESTMENGE AS REMAINQUANTITY, LOS_BESTAND.EINHEIT AS UNIT, ` +
       `LOS_BESTAND.MAT_PUF AS LOCATION, MAT_PUFFER.BEZ AS LOCDESC, ` +
       `STATUS AS STATUS, KLASSE AS CLASS FROM MAT_PUFFER, LOS_BESTAND ` +
-      `WHERE LOS_BESTAND.ALTERN_LOSNR1 = '${batchName}' AND MAT_PUFFER.MAT_PUF = LOS_BESTAND.MAT_PUF`;
+      `WHERE LOS_BESTAND.LOSNR = '${batchName}' AND MAT_PUFFER.MAT_PUF = LOS_BESTAND.MAT_PUF`;
     return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
       map((res: any) => {
         return res;
@@ -88,6 +88,7 @@ export class FetchService {
         }
         result.MACHINE = res[0].MACHINE;
         result.CURRENTOPERATION = res[0].OPERATION;
+        result.CURRENTMOTHEROPERATION = `2002LPZ000010020`;
 
         return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${opSql}`);
       }),
@@ -98,6 +99,7 @@ export class FetchService {
           result.NEXTOPERATION = res[0].NEXTOPERATION;
         }
 
+        result.NEXTMOTHEROPERATION = `2002LPZ000020020`;
         return result;
       })
     );
@@ -112,7 +114,7 @@ export class FetchService {
 
     const loadCompSql =
       `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY3 AS BATCHID, ` +
-      `LOS_BESTAND.ALTERN_LOSNR1 AS BATCH, SUBKEY5 AS POS, MENGE AS QTY, ` +
+      `LOS_BESTAND.LOSNR AS BATCH, SUBKEY5 AS POS, MENGE AS QTY, ` +
       `RESTMENGE AS REMAINQTY, LOS_BESTAND.ARTIKEL AS MATERIAL FROM HYBUCH, LOS_BESTAND ` +
       `WHERE KEY_TYPE = 'C' AND TYP = 'E' AND SUBKEY1 = '${machine}' AND SUBKEY3 = LOSNR`;
 
@@ -148,7 +150,9 @@ export class FetchService {
             });
           }
 
-          return result;
+          return result.sort((a, b) => {
+            return (a.INPUTBATCH > b.INPUTBATCH) ? 1 : -1;
+          });
         }
       )
     );

@@ -2,47 +2,58 @@
   <div class="weui-cells weui-cells_form">
     <div class="weui-cell">
       <div class="weui-cell__hd">
-        <label class="weui-label">批次号</label>
+        <label class="weui-label">Batch Nr</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #licenseTag (keydown.enter)='LicenseTagEntered($event)' shareAutoFocus name="licenseTag" [(ngModel)]='data.licenseTag'
-          placeholder="请输入原批次" weui-required required>
+        <input class="weui-input" #licenseTag (keydown.enter)='LicenseTagEntered($event)' shareAutoFocus name="licenseTag"
+          [(ngModel)]='data.licenseTag' placeholder="Pls input Batch Nr" weui-required required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{info}}
+        {{batchInfo}}
       </span>
     </label>
     <div class="weui-cell">
       <div class="weui-cell__hd">
-        <label class="weui-label">拆分的批次</label>
+        <label class="weui-label">Nr. of Splits</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #splittedBatch (keydown.enter)='SplittedBatchEntered($event)' name="splittedBatch" [(ngModel)]='data.splittedBatch'
-          placeholder="请输入拆分批次" weui-required required>
+        <input class="weui-input" weui-input='number' #numberOfSplits (keydown.enter)='NumberOfSplitsEntered($event)'
+          name="numberOfSplits" [(ngModel)]='data.numberOfSplits' placeholder="Pls input Nr. of Splits" weui-required
+          required>
       </div>
     </div>
     <div class="weui-cell">
-        <div class="weui-cell__hd">
-          <label class="weui-label">拆分的数量</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" weui-input='number' #splittedQty (keydown.enter)='SplittedQtyEntered($event)' name="splittedQty" [(ngModel)]='data.splittedQty'
-            placeholder="请输入拆分数量" weui-required required>
-        </div>
+      <div class="weui-cell__hd">
+        <label class="weui-label">Child Qty</label>
       </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" weui-input='number' #splittedQty (keydown.enter)='SplittedQtyEntered($event)' name="splittedQty"
+          [(ngModel)]='data.splittedQty' placeholder="Pls input split qty" weui-required required>
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{remainQtyInfo}}
+      </span>
+    </label>
     <div class="weui-cell">
       <div class="weui-cell__hd">
-        <label class="weui-label">操作人员</label>
+        <label class="weui-label">Operator</label>
       </div>
       <div class="weui-cell__bd">
         <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='data.operator'
-          placeholder="请输入操作人员" weui-required required>
+          placeholder="Pls input Operator" weui-required required>
       </div>
     </div>
-    <button weui-button [disabled]='isDisable()' (click)='splitBatch()'>拆分</button>
-    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>重置</button>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{operatorInfo}}
+      </span>
+    </label>
+    <button weui-button [disabled]='isDisable()' (click)='splitBatch()'>Split</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
 <div class="weui-cells">

@@ -16,10 +16,12 @@ import { UserService } from '@core/store/providers/user.service';
 import { RootEpics } from '@core/store/store.epic';
 import { TitleService } from '@core/title.service';
 import { IonicStorageModule } from '@ionic/storage';
+import { NewFetchService } from '@core/hydra/fetch.new.service';
 
 const HYDRA_PROVIDERS = [
   BapiService,
-  FetchService
+  FetchService,
+  NewFetchService
 ];
 
 const STORE_PROVIDERS = [

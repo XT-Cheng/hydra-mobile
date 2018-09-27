@@ -18,37 +18,31 @@ import { ChangeInputBatchComponent } from './features/operation/changeInputBatch
 import { InterruptOperationComponent } from './features/operation/interrupt-operation.component';
 import { LogoffOperationComponent } from './features/operation/logoff-operation.component';
 import { PackingComponent } from './features/operation/packing.component';
+import { LogoffInputBatchComponent } from './features/operation/logoffInputBatch-operation.component';
+import { FindBatchComponent } from './features/material/findBatch.component';
 
 const routes: Routes = [
   {
     path: '',
     component: LayoutDefaultComponent,
     children: [
-      { path: 'operation', component: OperationListComponent},
-      { path: 'material', component: MaterialListComponent},
-      { path: 'machine', component: MachineListComponent},
-      { path: 'operation/logon', component: LogonOperationComponent},
-      { path: 'operation/semiBatchGen', component: GenerateOutputSemiBatchComponent},
-      { path: 'operation/fgBatchGen', component: GenerateOutputFGBatchComponent},
-      { path: 'operation/changeInputBatch', component: ChangeInputBatchComponent},
-      { path: 'operation/interrupt', component: InterruptOperationComponent},
-      { path: 'operation/logoff', component: LogoffOperationComponent},
-      { path: 'operation/packing', component: PackingComponent},
-      { path: 'material/create', component: CreateBatchComponent},
-      { path: 'material/move', component: MoveBatchComponent},
-      { path: 'material/split', component: SplitBatchComponent},
-      // { path: 'viewPoint', loadChildren: 'app/routes/features/viewPoint/viewPoint.module#ViewPointModule' },
-      // 业务子模块
-      // { path: 'widgets', loadChildren: './widgets/widgets.module#WidgetsModule' }
+      { path: 'operation', component: OperationListComponent },
+      { path: 'material', component: MaterialListComponent },
+      { path: 'machine', component: MachineListComponent },
+      { path: 'operation/logon', component: LogonOperationComponent },
+      { path: 'operation/semiBatchGen', component: GenerateOutputSemiBatchComponent },
+      { path: 'operation/fgBatchGen', component: GenerateOutputFGBatchComponent },
+      { path: 'operation/changeInputBatch', component: ChangeInputBatchComponent },
+      { path: 'operation/interrupt', component: InterruptOperationComponent },
+      { path: 'operation/logoff', component: LogoffOperationComponent },
+      { path: 'operation/logoffBatch', component: LogoffInputBatchComponent },
+      { path: 'operation/packing', component: PackingComponent },
+      { path: 'material/create', component: CreateBatchComponent },
+      { path: 'material/move', component: MoveBatchComponent },
+      { path: 'material/split', component: SplitBatchComponent },
+      { path: 'material/find', component: FindBatchComponent },
     ]
   },
-  // 全屏布局
-  // {
-  //     path: 'fullscreen',
-  //     component: LayoutFullScreenComponent,
-  //     children: [
-  //     ]
-  // },
   // auth
   {
     path: 'auth',

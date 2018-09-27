@@ -1,4 +1,5 @@
-import { Directive, HostListener, Output, EventEmitter, ElementRef, Input } from '@angular/core';
+import { Directive, HostListener, Output, EventEmitter, ElementRef, Input, Inject } from '@angular/core';
+import { DOCUMENT } from '@angular/platform-browser';
 
 const TAB_KEY_CODE = 9;
 const ENTER_KEY_CODE = 13;
@@ -7,10 +8,42 @@ const ENTER_KEY_CODE = 13;
   selector: '[shareKeyHandler]'
 })
 export class KeyHandlerDirective {
-  @Output() input: EventEmitter<string> = new EventEmitter<string>();
   @Input('keyHandler') keyHandler: any = null;
 
   constructor(public elementRef: ElementRef) {
+  }
+
+  @HostListener('input', ['$event'])
+  InputEvent(event) {
+    event.preventDefault();
+
+    if (event.srcElement.tagName !== 'INPUT' || !this.keyHandler || !this.keyHandler.inputing) {
+      return;
+    }
+
+    this.keyHandler.inputing(event.srcElement);
+  }
+
+  @HostListener('blur', ['$event'])
+  BlurEvent(event) {
+    event.preventDefault();
+
+    if (event.srcElement.tagName !== 'INPUT' || !this.keyHandler || !this.keyHandler.req) {
+      return;
+    }
+
+    this.keyHandler.req(event.srcElement);
+  }
+
+  @HostListener('focus', ['$event'])
+  FocusEvent(event) {
+    event.preventDefault();
+
+    if (event.srcElement.tagName !== 'INPUT') {
+      return;
+    }
+
+    event.srcElement.select();
   }
 
   @HostListener('keydown', ['$event'])
@@ -23,53 +56,44 @@ export class KeyHandlerDirective {
     if (code === TAB_KEY_CODE) {
       event.preventDefault();
       this.onNext();
-      const previousIonElementValue = this.elementRef.nativeElement.children[0].value;
-      this.input.emit(previousIonElementValue);
     } else if (code === ENTER_KEY_CODE) {
       event.preventDefault();
       this.onEnter();
-      const previousIonElementValue = this.elementRef.nativeElement.children[0].value;
-      this.input.emit(previousIonElementValue);
     }
   }
 
   onEnter() {
-    console.log('onEnter()');
     if (!this.keyHandler) {
       return;
     }
 
     if (!this.keyHandler.nextInputId) {
-        return;
+      return;
     }
-    const nextInputElement = document.getElementById(this.keyHandler.nextIonInputId);
+    const nextInputElement = document.getElementById(this.keyHandler.nextInputId);
 
     // On enter, go to next input field
-    if (nextInputElement && nextInputElement.children[0]) {
-      const element: any = nextInputElement.children[0];
-      if (element.tagName === 'INPUT') {
-        element.focus();
+    if (nextInputElement) {
+      if (nextInputElement.tagName === 'INPUT') {
+        nextInputElement.focus();
       }
     }
   }
 
   onNext() {
-    console.log('onNext()');
     if (!this.keyHandler) {
-        return;
-      }
+      return;
+    }
 
-      if (!this.keyHandler.nextInputId) {
-          return;
-      }
+    if (!this.keyHandler.nextInputId) {
+      return;
+    }
+    const nextInputElement = document.getElementById(this.keyHandler.nextInputId);
 
-      const nextInputElement = document.getElementById(this.keyHandler.nextIonInputId);
-
-    // On enter, go to next input field
-    if (nextInputElement && nextInputElement.children[0]) {
-      const element: any = nextInputElement.children[0];
-      if (element.tagName === 'INPUT') {
-        element.focus();
+    // On Tab, go to next input field
+    if (nextInputElement) {
+      if (nextInputElement.tagName === 'INPUT') {
+        nextInputElement.focus();
       }
     }
   }

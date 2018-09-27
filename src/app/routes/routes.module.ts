@@ -20,6 +20,8 @@ import { ChangeInputBatchComponent } from './features/operation/changeInputBatch
 import { InterruptOperationComponent } from './features/operation/interrupt-operation.component';
 import { LogoffOperationComponent } from './features/operation/logoff-operation.component';
 import { PackingComponent } from './features/operation/packing.component';
+import { LogoffInputBatchComponent } from './features/operation/logoffInputBatch-operation.component';
+import { FindBatchComponent } from './features/material/findBatch.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
@@ -29,6 +31,8 @@ const OPERATION_COMPONENTS = [
   GenerateOutputFGBatchComponent,
   InterruptOperationComponent,
   LogoffOperationComponent,
+  LogoffInputBatchComponent,
+  FindBatchComponent,
   PackingComponent
 ];
 
