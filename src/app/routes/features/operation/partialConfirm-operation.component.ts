@@ -7,7 +7,6 @@ import { filter, tap, catchError } from 'rxjs/operators';
 import { NgForm, Validators } from '@angular/forms';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { MachineInfo, InputData, ReasonInfo, OperatorInfo } from '@core/interface/common.interface';
-import { stopEvent } from '../utils';
 import { throwError } from 'rxjs';
 
 @Component({
@@ -129,7 +128,7 @@ export class PartialConfirmOperationComponent {
 
   //#region Event Handler
   MachineEntered(event) {
-    stopEvent(event);
+    // stopEvent(event);
 
     if (this.form.controls['machine'].invalid) {
       this.machineElem.nativeElement.select();
@@ -140,7 +139,7 @@ export class PartialConfirmOperationComponent {
   }
 
   YieldEntered(event) {
-    stopEvent(event);
+    // stopEvent(event);
 
     if (this.form.controls['yield'].invalid) {
       this.yieldElem.nativeElement.select();
@@ -151,7 +150,7 @@ export class PartialConfirmOperationComponent {
   }
 
   ScrapEntered(event) {
-    stopEvent(event);
+    // stopEvent(event);
 
     if (this.form.controls['scrap'].invalid) {
       this.scrapElem.nativeElement.select();
@@ -168,7 +167,7 @@ export class PartialConfirmOperationComponent {
   }
 
   ScrapReasonEntered(event) {
-    stopEvent(event);
+    // stopEvent(event);
 
     if (this.form.controls['scrapReason'].invalid) {
       this.scrapReasonElem.nativeElement.select();
@@ -179,7 +178,7 @@ export class PartialConfirmOperationComponent {
   }
 
   OperatorEntered(event) {
-    stopEvent(event);
+    // stopEvent(event);
 
     if (this.form.controls['operator'].invalid) {
       this.operatorElem.nativeElement.select();

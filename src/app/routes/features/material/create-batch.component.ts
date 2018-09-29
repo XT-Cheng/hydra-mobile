@@ -217,7 +217,7 @@ export class CreateBatchComponent extends BaseForm {
         this.batchInfo.material,
         this.batchInfo.qty,
         this.bufferInfo.name,
-        this.inputData.badge
+        this.operatorInfo.badge
       );
   }
 

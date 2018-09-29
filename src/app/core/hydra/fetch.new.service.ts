@@ -141,6 +141,7 @@ export class NewFetchService {
           batchInfo.material = res[0].MATERIALNUMBER;
           batchInfo.qty = res[0].REMAINQUANTITY;
           batchInfo.startQty = res[0].QUANTITY;
+          batchInfo.currentLocation = res[0].LOCATION;
 
           return of(batchInfo);
         } else {

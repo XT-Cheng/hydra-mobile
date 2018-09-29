@@ -5,13 +5,14 @@
         <label class="weui-label">Batch Nr</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #licenseTag (keydown.enter)='LicenseTagEntered($event)' shareAutoFocus name="licenseTag"
-          [(ngModel)]='data.licenseTag' placeholder="Pls input Batch Nr" weui-required required>
+        <input class="weui-input" #batch (keydown.enter)='BatchEntered($event)' shareAutoFocus name="batch" id="batch"
+          [(ngModel)]='inputData.barCode' shareKeyHandler [keyHandler]='{nextInputId: "materialBuffer",inputing: inputing, req: request(requestBatchData, requestBatchDataSuccess, requestBatchDataFailed)}'
+          placeholder="Pls input Batch Nr" weui-required required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{batchInfo}}
+        {{batchInfo.display()}}
       </span>
     </label>
     <div class="weui-cell">
@@ -20,12 +21,13 @@
       </div>
       <div class="weui-cell__bd">
         <input class="weui-input" #materialBuffer (keydown.enter)='MaterialBufferEntered($event)' name="materialBuffer"
-          [(ngModel)]='data.materialBuffer' placeholder="Pls input Storage Loc." weui-required required>
+          id="materialBuffer" shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestMaterialBufferData, requestMaterialBufferDataSuccess, requestMaterialBufferDataFailed)}'
+          [(ngModel)]='inputData.materialBuffer' placeholder="Pls input Storage Loc." weui-required required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{bufferInfo}}
+        {{bufferInfo.display()}}
       </span>
     </label>
     <div class="weui-cell">
@@ -33,27 +35,18 @@
         <label class="weui-label">Operator</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='data.operator'
+        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" id="operator"
+          [(ngModel)]='inputData.badge' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
           placeholder="Pls input Operator" weui-required required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{operatorInfo}}
+        {{operatorInfo.display()}}
       </span>
     </label>
-    <button weui-button [disabled]='isDisable()' (click)='moveBatch()'>Move</button>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(moveBatch, moveBatchSuccess, moveBatchFailed)'>Move</button>
     <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
-<div class="weui-cells">
-  <a *ngFor='let ret of results' class="weui-cell weui-cell_access" href="javascript:;">
-    <div class="weui-cell__hd">
-      <i [ngClass]='getResultClass(ret)'></i>
-    </div>
-    <div class="weui-cell__bd">
-      <p>{{ret.message}}</p>
-    </div>
-    <div class="weui-cell__ft">{{ret.timeStamp | date: 'yyyy/MM/dd, HH:mm:ss'}}</div>
-  </a>
-</div>
+<weui-mask #mask [backdrop]="false"></weui-mask>
