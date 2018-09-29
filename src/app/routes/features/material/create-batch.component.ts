@@ -1,11 +1,32 @@
 import { Component, HostBinding, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { FetchService } from '@core/hydra/fetch.service';
-import { switchMap, filter } from 'rxjs/operators';
+import { switchMap, filter, catchError, tap, map } from 'rxjs/operators';
 import { NgForm } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
 import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService } from 'ngx-weui';
+import { MaterialBufferInfo, BatchInfo, OperatorInfo } from '@core/interface/common.interface';
+import { stopEvent } from '../utils';
+import { NewFetchService } from '@core/hydra/fetch.new.service';
+import { of, throwError } from 'rxjs';
+
+interface InputData {
+  barcode: string;
+  batchName: string;
+  material: string;
+  materialBuffer: string;
+  qty: number;
+  badge: string;
+}
+
+class InputData implements InputData {
+  barcode = '';
+  badge = '';
+  batchName = '';
+  materialBuffer = '';
+  material = '';
+  qty = 0;
+}
 
 @Component({
   selector: 'batch-create',
@@ -13,40 +34,23 @@ import { ToastService, ToptipsService } from 'ngx-weui';
   styleUrls: ['./create-batch.component.scss']
 })
 export class CreateBatchComponent {
-  @HostBinding('style.display')
-  display = 'flex';
-  @HostBinding('style.flex-direction')
-  direction = 'column';
-  @HostBinding('style.height')
-  height = '100%';
+  @ViewChild('f') form: NgForm;
+  @ViewChild('batch') batchElem: ElementRef;
+  @ViewChild('materialBuffer') materialBufferElem: ElementRef;
+  @ViewChild('operator') operatorElem: ElementRef;
+  @ViewChild('execute', { read: ElementRef }) buttonElem: ElementRef;
 
-  @ViewChild('licenseTag')
-  licenseTagElem: ElementRef;
-  @ViewChild('materialBuffer')
-  materialBufferElem: ElementRef;
-  @ViewChild('operator')
-  operatorElem: ElementRef;
-  @ViewChild('f')
-  form: NgForm;
+  bufferInfo: MaterialBufferInfo = new MaterialBufferInfo();
+  batchInfo: BatchInfo = new BatchInfo();
+  operatorInfo: OperatorInfo = new OperatorInfo();
 
-  data: any = {
-    batchName: '',
-    licenseTag: '',
-    materialBuffer: '',
-    operator: '',
-    materialNumber: '',
-    quantity: -1
-  };
+  inputData: InputData = new InputData();
 
-  licenseTagInfo: string;
-  bufferInfo: string;
-  operatorInfo: string;
-
-  results: any[] = [];
+  isInputing = false;
 
   constructor(
     private _bapiService: BapiService,
-    private _fetchService: FetchService,
+    private _fetchService: NewFetchService,
     private _routeService: Router,
     private _titleService: TitleService,
     private _toastService: ToastService,
@@ -59,191 +63,199 @@ export class CreateBatchComponent {
       });
   }
 
+  Inputing = () => {
+    this.isInputing = true;
+  }
+
+  //#region Data Request
+  requestBatchData = () => {
+    this.isInputing = false;
+
+    if (!this.inputData.barcode) {
+      this.batchInfo = new BatchInfo();
+      return;
+    }
+
+    // if (this.inputData.batchName !== this.batchInfo.name) {
+    this.isInputing = true;
+    this._toastService['loading']();
+
+    this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barcode).pipe(
+      switchMap((batchInfo: BatchInfo) => {
+        this.batchInfo = batchInfo;
+        return this._fetchService.getBatchInformation(batchInfo.name);
+      }),
+      catchError(err => {
+        if (err.includes('not exist')) {
+          return of(null);
+        }
+        return throwError(err);
+      }),
+      map((batchInfo: BatchInfo) => {
+        if (!!batchInfo) {
+          return throwError(`Batch ${this.inputData.batchName} exist！`);
+        }
+        return;
+      }
+      )).subscribe(_ => {
+        this.isInputing = false;
+        this.inputData.barcode = this.batchInfo.name;
+        this._toastService.hide();
+      }, err => {
+        this.isInputing = false;
+        this._toastService.hide();
+        this.batchInfo = new BatchInfo();
+        this._tipService.warn(err);
+        this.resetForm();
+      });
+    // }
+  }
+
+  requestMaterialBufferData = () => {
+    this.isInputing = false;
+
+    if (!this.inputData.materialBuffer) {
+      this.bufferInfo = new MaterialBufferInfo();
+      return;
+    }
+
+    if (this.inputData.materialBuffer !== this.bufferInfo.name) {
+      this.isInputing = true;
+      this._toastService['loading']();
+
+      this._fetchService.getMaterialBuffer(this.inputData.materialBuffer).
+        subscribe((bufferInfo: MaterialBufferInfo) => {
+          this.isInputing = false;
+          this.bufferInfo = bufferInfo;
+          this._toastService.hide();
+        }, err => {
+          this._tipService.warn(err);
+          this._toastService.hide();
+          this.bufferInfo = new MaterialBufferInfo();
+          this.isInputing = false;
+          this.materialBufferElem.nativeElement.select();
+        });
+    }
+  }
+
+  requestOperatorData = () => {
+    this.isInputing = false;
+
+    if (!this.inputData.badge) {
+      this.operatorInfo = new OperatorInfo();
+      return;
+    }
+
+    if (this.inputData.badge !== this.operatorInfo.badge) {
+      this.isInputing = true;
+      this._toastService['loading']();
+
+      this._fetchService.getOperatorByBadge(this.inputData.badge).subscribe((operatorInfo: OperatorInfo) => {
+        this._toastService.hide();
+        this.operatorInfo = operatorInfo;
+        this.isInputing = false;
+      }, (error) => {
+        this._tipService.warn(error);
+        this._toastService.hide();
+        this.operatorInfo = new OperatorInfo();
+        this.isInputing = false;
+        this.operatorElem.nativeElement.select();
+      });
+    }
+  }
+  //#endregion
+
+  //#region Event Handler
+
+  BatchEntered(event) {
+    stopEvent(event);
+
+    if (this.form.controls['batch'].invalid) {
+      this.batchElem.nativeElement.select();
+      return;
+    }
+
+    this.materialBufferElem.nativeElement.focus();
+  }
+
+  MaterialBufferEntered(event) {
+    stopEvent(event);
+
+    if (this.form.controls['materialBuffer'].invalid) {
+      this.materialBufferElem.nativeElement.select();
+      return;
+    }
+
+    this.operatorElem.nativeElement.focus();
+  }
+
+  OperatorEntered(event) {
+    stopEvent(event);
+
+    if (this.form.controls['operator'].invalid) {
+      this.operatorElem.nativeElement.select();
+      return;
+    }
+
+    this.operatorElem.nativeElement.blur();
+  }
+
+  //#endregion
+
+  //#region Exeuction
+
   createBatch() {
-    const result = {
-      batchName: this.data.batchName,
-      materialBuffer: this.data.materialBuffer,
-      operator: this.data.operator,
-      isExecutingBapi: false,
-      materialNumber: this.data.materialNumber,
-      quantity: this.data.quantity,
-      isSuccess: false,
-      message: '',
-      timeStamp: new Date()
-    };
-
-    this.resetForm();
-
-    this.results.unshift(result);
-
-    // Update results
-    if (this.results.length > 4) {
-      this.results.pop();
+    if (this.isInputing) {
+      return;
     }
 
     this._toastService['loading']();
 
     // Create Batch
-    result.isExecutingBapi = true;
     this._bapiService
       .createBatch(
-        result.batchName,
-        result.materialNumber,
-        result.quantity,
-        result.materialBuffer,
-        result.operator
-      )
-      .pipe()
-      .subscribe(
-        ret => {
-          // Set Status
-          result.isExecutingBapi = false;
-
-          result.isSuccess = ret.isSuccess;
-
-          // Update results
-          if (result.isSuccess) {
-            result.message = `Batch: ${result.batchName} Created!`;
-          } else {
-            result.message = ret.description;
+        this.inputData.batchName,
+        this.inputData.material,
+        this.inputData.qty,
+        this.inputData.materialBuffer,
+        this.inputData.badge
+      ).pipe(
+        tap((ret) => {
+          if (!ret.isSuccess) {
+            throwError(ret.description);
           }
-
-          this._toastService.hide();
-        },
+        })
+      ).subscribe(ret => {
+        this._tipService['primary'](`Batch ${this.batchInfo.name} Created!`);
+        this._toastService.hide();
+        this.resetForm();
+      },
         error => {
-          console.log(error);
+          this._tipService.warn(error);
+          this._toastService.hide();
+          this.resetForm();
         }
       );
   }
 
-  resetForm() {
-    this.form.reset();
-    this.data = {};
+  //#endregion
 
-    this.bufferInfo = '';
-    this.operatorInfo = '';
-    this.licenseTagInfo = '';
-
-    this.licenseTagElem.nativeElement.focus();
-  }
-
-  LicenseTagEntered(event) {
-    event.preventDefault();
-    if (this.data.licenseTag === '') {
-      return;
-    }
-
-    this._toastService['loading']();
-
-    this._fetchService.getLicenseTagFrom2DBarCode(this.data.licenseTag).pipe(
-      switchMap(ret => {
-        this.data.batchName = ret.BATCHNAME;
-        this.data.materialNumber = ret.PARTNO;
-        this.data.quantity = ret.QUANTITY;
-        this.licenseTagInfo = `Batch：${this.data.batchName},Mat: ${this.data.materialNumber},Qty: ${this.data.quantity}`;
-
-        return this._fetchService.getBatchInformation(this.data.batchName);
-      })
-    ).subscribe(ret => {
-      this._toastService.hide();
-      if (ret !== null && ret.length !== 0) {
-        this._tipService['warn'](`Batch ${this.data.batchName} existed！`);
-        this.resetForm();
-      } else {
-        this.materialBufferElem.nativeElement.focus();
-      }
-    }, err => {
-      this._toastService.hide();
-      this._tipService['warn'](`Error: ${err}！`);
-      this.resetForm();
-    });
-  }
-
-  MaterialBufferEntered(event) {
-    event.preventDefault();
-
-    if (this.data.licenseTag === '') {
-      return;
-    }
-
-    if (this.data.materialBuffer === '') {
-      return;
-    }
-
-    this._toastService['loading']();
-
-    this._fetchService
-      .getMaterialBuffer(this.data.materialBuffer)
-      .subscribe(ret => {
-        this._toastService.hide();
-        if (ret === null || ret.length === 0) {
-          this._tipService['warn'](`Storage ${this.data.materialBuffer} not exist！`);
-          this.resetForm();
-        } else {
-          this.bufferInfo = `Storage: ${ret[0].DESCRIPTION}`;
-          this.operatorElem.nativeElement.focus();
-        }
-      }, err => {
-        this._toastService.hide();
-        this._tipService['warn'](`Error: ${err}！`);
-        this.resetForm();
-      });
-  }
-
-  OperatorEntered(event) {
-    event.preventDefault();
-
-    if (this.data.licenseTag === '') {
-      return;
-    }
-
-    if (this.data.materialBuffer === '') {
-      return;
-    }
-
-    if (this.data.operator === '') {
-      return;
-    }
-
-    this._toastService['loading']();
-
-    this._fetchService.getOperator(this.data.operator).subscribe(ret => {
-      this._toastService.hide();
-      if (ret === null || ret.length === 0) {
-        this._tipService['warn'](`Operator ${this.data.operator} not exist！`);
-        this.resetForm();
-      } else {
-        this.operatorInfo = `Operator ${ret[0].NAME}`;
-        this.createBatch();
-      }
-    }, err => {
-      this._toastService.hide();
-      this._tipService['warn'](`Error: ${err}！`);
-      this.resetForm();
-    });
-  }
-
-  getResultClass(result) {
-    return {
-      'weui-icon-success': this.showSuccess(result),
-      'weui-icon-warn': this.showError(result),
-      'weui-loading': this.showLoading(result)
-    };
-  }
+  //#region Private methods
 
   isDisable() {
     return !this.form.valid;
   }
 
-  showLoading(result): boolean {
-    return result.isFetchingLicenseTag || result.isExecutingBapi;
+  resetForm() {
+    this.bufferInfo = new MaterialBufferInfo();
+    this.batchInfo = new BatchInfo();
+    this.operatorInfo = new OperatorInfo();
+
+    this.inputData = new InputData();
+    this.isInputing = false;
+
+    this.batchElem.nativeElement.focus();
   }
 
-  showSuccess(result): boolean {
-    return result.isSuccess;
-  }
-
-  showError(result): boolean {
-    return !result.isSuccess && !this.showLoading(result);
-  }
+  //#endregion
 }

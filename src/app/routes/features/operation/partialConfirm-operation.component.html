@@ -63,7 +63,8 @@
         {{operatorInfo.display()}}
       </span>
     </label>
-    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='inerruptOperation()'>Interrupt
-      OP</button>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='partialConfirmOperation()'>Partial
+      Confirmation</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>

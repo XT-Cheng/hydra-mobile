@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError, of } from 'rxjs';
 import { map, concatMap } from 'rxjs/operators';
 import { WEBAPI_HOST } from '@core/constants';
-import { MachineInfo, ReasonInfo, OperatorInfo } from '@core/interface/common.interface';
+import { MachineInfo, ReasonInfo, OperatorInfo, BatchInfo, MaterialBufferInfo } from '@core/interface/common.interface';
 
 @Injectable()
 export class NewFetchService {
@@ -82,6 +82,66 @@ export class NewFetchService {
           return of(operatorInfo);
         } else {
           return throwError(`Badge ${badge} not exist！`);
+        }
+      })
+    );
+  }
+
+  getBatchInfoFrom2DBarCode(barCodeOf2D: string): Observable<BatchInfo> {
+    const batchInfo: BatchInfo = new BatchInfo();
+
+    const ret = barCodeOf2D.split(';');
+
+    if (ret.length !== 3) { return throwError('Batch Label format in-correct'); }
+
+    batchInfo.name = ret[0];
+    batchInfo.material = ret[1];
+    batchInfo.qty = batchInfo.startQty = parseInt(ret[2], 10);
+    return of(batchInfo);
+  }
+
+  getMaterialBuffer(buffer: string): Observable<MaterialBufferInfo> {
+    const bufferInfo: MaterialBufferInfo = new MaterialBufferInfo();
+
+    const bufferSql =
+      `SELECT MAT_PUF AS BUFFER, BEZ AS DESCRIPTION ` +
+      ` FROM MAT_PUFFER WHERE MAT_PUF = '${buffer}'`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${bufferSql}`).pipe(
+      concatMap((res: any) => {
+        if (res.length !== 0) {
+          bufferInfo.name = res[0].BUFFER;
+          bufferInfo.description = res[0].DESCRIPTION;
+          return of(bufferInfo);
+        } else {
+          return throwError(`Buffer ${buffer} not exist！`);
+        }
+      })
+    );
+  }
+
+  getBatchInformation(batchName: string): Observable<BatchInfo> {
+    const batchInfo: BatchInfo = new BatchInfo();
+
+    const sql =
+      `SELECT LOS_BESTAND.LOSNR AS BATCHNAME, LOS_BESTAND.LOSNR AS ID, ` +
+      `LOS_BESTAND.HZ_TYP AS MATERIALTYPE, ` +
+      `LOS_BESTAND.ARTIKEL AS MATERIALNUMBER, LOS_BESTAND.ARTIKEL_BEZ AS MATERIALDESC, LOS_BESTAND.MENGE AS QUANTITY, ` +
+      `LOS_BESTAND.RESTMENGE AS REMAINQUANTITY, LOS_BESTAND.EINHEIT AS UNIT, ` +
+      `LOS_BESTAND.MAT_PUF AS LOCATION, MAT_PUFFER.BEZ AS LOCDESC, ` +
+      `STATUS AS STATUS, KLASSE AS CLASS FROM MAT_PUFFER, LOS_BESTAND ` +
+      `WHERE LOS_BESTAND.LOSNR = '${batchName}' AND MAT_PUFFER.MAT_PUF = LOS_BESTAND.MAT_PUF`;
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
+      concatMap((res: any) => {
+        if (res.length !== 0) {
+          batchInfo.name = res[0].BATCHNAME;
+          batchInfo.material = res[0].MATERIALNUMBER;
+          batchInfo.qty = res[0].REMAINQUANTITY;
+          batchInfo.startQty = res[0].QUANTITY;
+
+          return of(batchInfo);
+        } else {
+          return throwError(`Batch ${batchName} not exist！`);
         }
       })
     );

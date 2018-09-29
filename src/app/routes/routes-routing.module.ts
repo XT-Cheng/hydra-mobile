@@ -20,6 +20,7 @@ import { LogoffOperationComponent } from './features/operation/logoff-operation.
 import { PackingComponent } from './features/operation/packing.component';
 import { LogoffInputBatchComponent } from './features/operation/logoffInputBatch-operation.component';
 import { FindBatchComponent } from './features/material/findBatch.component';
+import { PartialConfirmOperationComponent } from './features/operation/partialConfirm-operation.component';
 
 const routes: Routes = [
   {
@@ -34,6 +35,7 @@ const routes: Routes = [
       { path: 'operation/fgBatchGen', component: GenerateOutputFGBatchComponent },
       { path: 'operation/changeInputBatch', component: ChangeInputBatchComponent },
       { path: 'operation/interrupt', component: InterruptOperationComponent },
+      { path: 'operation/partialConfirm', component: PartialConfirmOperationComponent },
       { path: 'operation/logoff', component: LogoffOperationComponent },
       { path: 'operation/logoffBatch', component: LogoffInputBatchComponent },
       { path: 'operation/packing', component: PackingComponent },

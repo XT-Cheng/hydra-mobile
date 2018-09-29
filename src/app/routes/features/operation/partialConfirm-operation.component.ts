@@ -11,11 +11,11 @@ import { stopEvent } from '../utils';
 import { throwError } from 'rxjs';
 
 @Component({
-  selector: 'operation-interrupt',
-  templateUrl: 'interrupt-operation.component.html',
-  styleUrls: ['./interrupt-operation.component.scss']
+  selector: 'operation-paritial-confirm',
+  templateUrl: 'partialConfirm-operation.component.html',
+  styleUrls: ['./partialConfirm-operation.component.scss']
 })
-export class InterruptOperationComponent {
+export class PartialConfirmOperationComponent {
   @ViewChild('f') form: NgForm;
   @ViewChild('machine') machineElem: ElementRef;
   @ViewChild('yield') yieldElem: ElementRef;
@@ -38,7 +38,7 @@ export class InterruptOperationComponent {
     this._routeService.events.pipe(
       filter((event) => event instanceof NavigationEnd)
     ).subscribe(() => {
-      this._titleService.setTitle(`OP Interrupt`);
+      this._titleService.setTitle(`OP Partial Confirm`);
     });
   }
 
@@ -193,13 +193,13 @@ export class InterruptOperationComponent {
 
   //#region Exeuction
 
-  inerruptOperation() {
+  partialConfirmOperation() {
     if (this.isInputing) {
       return;
     }
 
     this._toastService['loading']();
-    this._bapiService.interruptOperation(this.machineInfo.currentOperation, this.machineInfo.machine,
+    this._bapiService.partialConfirmOperation(this.machineInfo.currentOperation, this.machineInfo.machine,
       this.inputData.yield, this.inputData.scrap, this.inputData.scrapReason, this.inputData.badge).pipe(
         tap((ret) => {
           if (!ret.isSuccess) {
@@ -208,7 +208,7 @@ export class InterruptOperationComponent {
         })
       )
       .subscribe(_ => {
-        this._tipService['primary'](`Order ${this.machineInfo.currentOperation} Interruptted!`);
+        this._tipService['primary'](`Order ${this.machineInfo.currentOperation} Partial Confirmed!`);
         this._toastService.hide();
         this.resetForm();
       }, error => {

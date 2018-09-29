@@ -22,6 +22,7 @@ import { LogoffOperationComponent } from './features/operation/logoff-operation.
 import { PackingComponent } from './features/operation/packing.component';
 import { LogoffInputBatchComponent } from './features/operation/logoffInputBatch-operation.component';
 import { FindBatchComponent } from './features/material/findBatch.component';
+import { PartialConfirmOperationComponent } from './features/operation/partialConfirm-operation.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
@@ -32,6 +33,7 @@ const OPERATION_COMPONENTS = [
   InterruptOperationComponent,
   LogoffOperationComponent,
   LogoffInputBatchComponent,
+  PartialConfirmOperationComponent,
   FindBatchComponent,
   PackingComponent
 ];

@@ -38,7 +38,7 @@ export class LogoffOperationComponent {
     this._routeService.events.pipe(
       filter((event) => event instanceof NavigationEnd)
     ).subscribe(() => {
-      this._titleService.setTitle(`LogOff OP`);
+      this._titleService.setTitle(`OP LogOff`);
     });
   }
 
