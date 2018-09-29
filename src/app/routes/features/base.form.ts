@@ -2,9 +2,10 @@ import { ViewChild, ElementRef } from '@angular/core';
 import { MaskComponent, ToastService, ToptipsService } from 'ngx-weui';
 import { NgForm } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { filter, tap, delay } from 'rxjs/operators';
 import { TitleService } from '@core/title.service';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
+import { IBapiResult } from '@core/hydra/bapi/constants';
 
 export abstract class BaseForm {
   //#region Abstract property
@@ -32,19 +33,31 @@ export abstract class BaseForm {
 
   //#region Constructor
 
-  constructor(private _toastService: ToastService, private _routeService: Router,
-    private _tipService: ToptipsService,
-    private _titleService: TitleService) {
+  constructor(protected _toastService: ToastService, protected _routeService: Router,
+    protected _tipService: ToptipsService,
+    protected _titleService: TitleService) {
     this._routeService.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(event => {
-        this._titleService.setTitle(`Batch Create`);
+        this._titleService.setTitle(this.title);
       });
   }
 
   //#endregion
 
+  //#region Abstrace methods
+
+  protected abstract resetForm();
+  protected abstract isValid();
+
+  //#endregion
+
   //#region Protected methods
+  protected stopEvent(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  }
 
   protected start() {
     this.isInputing = true;
@@ -52,17 +65,56 @@ export abstract class BaseForm {
     this._toastService.loading();
   }
 
-  protected end() {
+  protected end(err: any = null) {
+    if (err) {
+      this._tipService.warn(err);
+    }
     this.isInputing = false;
     setTimeout(_ => this.mask.hide());
     this._toastService.hide();
   }
 
-  protected request(handler: () => Observable<any>, success: (ret: any) => void) {
+  protected request(handler: () => Observable<any>, success: (ret: any) => void, failed: (err: any) => void) {
+    return () => {
+      this.start();
+
+      handler().subscribe((ret) => {
+        success(ret);
+        this.end();
+      },
+        (err) => {
+          failed(err);
+          this.end(err);
+        });
+    };
+  }
+
+  protected doAction(handler: () => Observable<IBapiResult>, success: (ret: any) => void, failed: (err: any) => void) {
+    if (this.isInputing) {
+      return;
+    }
+
     this.start();
 
-    handler().subscribe((ret) => success(ret),
-      (err) => this.end());
+    handler().pipe(
+      delay(5000),
+      tap((ret: IBapiResult) => {
+        if (!ret.isSuccess) {
+          throwError(ret.description);
+        }
+      }
+      )).subscribe((ret) => {
+        success(ret);
+        this.end();
+        this.resetForm();
+      }, (err) => {
+        failed(err);
+        this.end();
+      });
+  }
+
+  protected isDisable() {
+    return !this.form.valid || !this.isValid();
   }
 
   //#endregion

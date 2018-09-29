@@ -1,14 +1,13 @@
-import { Component, HostBinding, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { switchMap, filter, catchError, tap, map } from 'rxjs/operators';
-import { NgForm } from '@angular/forms';
-import { Router, NavigationEnd } from '@angular/router';
+import { switchMap, catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
-import { ToastService, ToptipsService, MaskComponent } from 'ngx-weui';
+import { ToastService, ToptipsService } from 'ngx-weui';
 import { MaterialBufferInfo, BatchInfo, OperatorInfo } from '@core/interface/common.interface';
-import { stopEvent } from '../utils';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { of, throwError } from 'rxjs';
+import { BaseForm } from '../base.form';
 
 interface InputData {
   barCode: string;
@@ -33,152 +32,142 @@ class InputData implements InputData {
   templateUrl: 'create-batch.component.html',
   styleUrls: ['./create-batch.component.scss']
 })
-export class CreateBatchComponent {
-  @ViewChild('f') form: NgForm;
+export class CreateBatchComponent extends BaseForm {
+  //#region View Children
+
   @ViewChild('batch') batchElem: ElementRef;
   @ViewChild('materialBuffer') materialBufferElem: ElementRef;
   @ViewChild('operator') operatorElem: ElementRef;
-  @ViewChild('execute', { read: ElementRef }) buttonElem: ElementRef;
-  @ViewChild('mask') mask: MaskComponent;
 
-  bufferInfo: MaterialBufferInfo = new MaterialBufferInfo();
-  batchInfo: BatchInfo = new BatchInfo();
-  operatorInfo: OperatorInfo = new OperatorInfo();
+  //#endregion
 
-  inputData: InputData = new InputData();
+  //#region Protected member
 
-  isInputing = false;
+  protected bufferInfo: MaterialBufferInfo = new MaterialBufferInfo();
+  protected batchInfo: BatchInfo = new BatchInfo();
+  protected operatorInfo: OperatorInfo = new OperatorInfo();
+
+  protected inputData: InputData = new InputData();
+
+  protected title = `Batch Create`;
+
+  //#endregion
+
+  //#region Constructor
 
   constructor(
-    private _bapiService: BapiService,
     private _fetchService: NewFetchService,
-    private _routeService: Router,
-    private _titleService: TitleService,
-    private _toastService: ToastService,
-    private _tipService: ToptipsService
+    private _bapiService: BapiService,
+    _routeService: Router,
+    _titleService: TitleService,
+    _toastService: ToastService,
+    _tipService: ToptipsService
   ) {
-    this._routeService.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(event => {
-        this._titleService.setTitle(`Batch Create`);
-      });
+    super(_toastService, _routeService, _tipService, _titleService);
   }
 
-  Inputing = () => {
-    this.isInputing = true;
-  }
+  //#endregion
 
   //#region Data Request
-  requestBatchData = () => {
-    this.isInputing = false;
 
+  //#region Batch Reqeust
+
+  requestBatchDataSuccess = (_) => {
+    this.inputData.barCode = this.batchInfo.batchName;
+  }
+
+  requestBatchDataFailed = () => {
+    this.batchElem.nativeElement.select();
+    this.resetForm();
+  }
+
+  requestBatchData = () => {
     if (!this.inputData.barCode) {
       this.batchInfo = new BatchInfo();
-      return;
+      return of(this.batchInfo);
     }
 
-    if (this.inputData.barCode !== this.batchInfo.barCode) {
-      this.isInputing = true;
-      this.mask.show();
-      this._toastService['loading']();
+    if (this.inputData.barCode === this.batchInfo.barCode) {
+      return of(this.batchInfo);
+    }
 
-      this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
-        switchMap((batchInfo: BatchInfo) => {
-          this.batchInfo = batchInfo;
-          return this._fetchService.getBatchInformation(batchInfo.batchName);
-        }),
-        switchMap((batchInfo: BatchInfo) => {
-          if (!!batchInfo) {
-            return throwError(`Batch ${this.batchInfo.batchName} exist！`);
-          }
-          return;
+    return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
+      switchMap((batchInfo: BatchInfo) => {
+        this.batchInfo = batchInfo;
+        return this._fetchService.getBatchInformation(batchInfo.batchName);
+      }),
+      switchMap((batchInfo: BatchInfo) => {
+        if (!!batchInfo) {
+          return throwError(`Batch ${this.batchInfo.batchName} exist！`);
         }
-        ),
-        catchError(err => {
-          if (err.includes('not exist')) {
-            return of(null);
-          }
-          return throwError(err);
-        })).subscribe(_ => {
-          this.isInputing = false;
-          this.inputData.barCode = this.batchInfo.batchName;
-          this._toastService.hide();
-          this.mask.hide();
-        }, err => {
-          this.isInputing = false;
-          this._toastService.hide();
-          setTimeout(_ => this.mask.hide());
-          this.batchInfo = new BatchInfo();
-          this._tipService.warn(err);
-          this.resetForm();
-        });
-    }
+        return of(null);
+      }
+      ),
+      catchError(err => {
+        if (err.includes('not exist')) {
+          return of(null);
+        }
+        return throwError(err);
+      }));
+  }
+
+  //#endregion
+
+  //#region Buffer Reqeust
+  requestMaterialBufferDataSuccess = (bufferInfo) => {
+    this.bufferInfo = bufferInfo;
+  }
+
+  requestMaterialBufferDataFailed = () => {
+    this.bufferInfo = new MaterialBufferInfo();
+    this.materialBufferElem.nativeElement.select();
   }
 
   requestMaterialBufferData = () => {
-    this.isInputing = false;
-
     if (!this.inputData.materialBuffer) {
       this.bufferInfo = new MaterialBufferInfo();
-      return;
+      return of(this.bufferInfo);
     }
 
-    if (this.inputData.materialBuffer !== this.bufferInfo.name) {
-      this.isInputing = true;
-      this.mask.show();
-      this._toastService['loading']();
-
-      this._fetchService.getMaterialBuffer(this.inputData.materialBuffer).
-        subscribe((bufferInfo: MaterialBufferInfo) => {
-          this.isInputing = false;
-          this.bufferInfo = bufferInfo;
-          this.mask.hide();
-          this._toastService.hide();
-        }, err => {
-          this._tipService.warn(err);
-          this.mask.hide();
-          this._toastService.hide();
-          this.bufferInfo = new MaterialBufferInfo();
-          this.isInputing = false;
-          this.materialBufferElem.nativeElement.select();
-        });
+    if (this.inputData.materialBuffer === this.bufferInfo.name) {
+      return of(this.bufferInfo);
     }
+
+    return this._fetchService.getMaterialBuffer(this.inputData.materialBuffer);
+  }
+
+  //#endregion
+
+  //#region Operator Reqeust
+  requestOperatorDataSuccess = (operatorInfo) => {
+    this.operatorInfo = operatorInfo;
+  }
+
+  requestOperatorDataFailed = () => {
+    this.operatorInfo = new OperatorInfo();
+    this.operatorElem.nativeElement.select();
   }
 
   requestOperatorData = () => {
-    this.isInputing = false;
-
     if (!this.inputData.badge) {
       this.operatorInfo = new OperatorInfo();
-      return;
+      return of(this.operatorInfo);
     }
 
-    if (this.inputData.badge !== this.operatorInfo.badge) {
-      this.isInputing = true;
-      this.mask.show();
-      this._toastService['loading']();
-
-      this._fetchService.getOperatorByBadge(this.inputData.badge).subscribe((operatorInfo: OperatorInfo) => {
-        this.mask.hide();
-        this._toastService.hide();
-        this.operatorInfo = operatorInfo;
-        this.isInputing = false;
-      }, (error) => {
-        this._tipService.warn(error);
-        this.mask.hide();
-        this._toastService.hide();
-        this.operatorInfo = new OperatorInfo();
-        this.isInputing = false;
-        this.operatorElem.nativeElement.select();
-      });
+    if (this.inputData.badge === this.operatorInfo.badge) {
+      return of(this.operatorInfo);
     }
+
+    return this._fetchService.getOperatorByBadge(this.inputData.badge);
   }
+  //#endregion
+
   //#endregion
 
   //#region Event Handler
 
   BatchEntered(event) {
-    stopEvent(event);
+    this.stopEvent(event);
 
     if (this.form.controls['batch'].invalid) {
       this.batchElem.nativeElement.select();
@@ -189,7 +178,7 @@ export class CreateBatchComponent {
   }
 
   MaterialBufferEntered(event) {
-    stopEvent(event);
+    this.stopEvent(event);
 
     if (this.form.controls['materialBuffer'].invalid) {
       this.materialBufferElem.nativeElement.select();
@@ -200,7 +189,7 @@ export class CreateBatchComponent {
   }
 
   OperatorEntered(event) {
-    stopEvent(event);
+    this.stopEvent(event);
 
     if (this.form.controls['operator'].invalid) {
       this.operatorElem.nativeElement.select();
@@ -213,50 +202,28 @@ export class CreateBatchComponent {
   //#endregion
 
   //#region Exeuction
+  createBatchSuccess = () => {
+    this._tipService['primary'](`Batch ${this.batchInfo.batchName} Created!`);
+  }
 
-  createBatch() {
-    if (this.isInputing) {
-      return;
-    }
-    this.mask.show();
-    this._toastService['loading']();
+  createBatchFailed = () => {
+    this.batchElem.nativeElement.focus();
+  }
 
-    // Create Batch
-    this._bapiService
+  createBatch = () => {
+    return this._bapiService
       .createBatch(
         this.batchInfo.batchName,
         this.batchInfo.material,
         this.batchInfo.qty,
         this.bufferInfo.name,
         this.inputData.badge
-      ).pipe(
-        tap((ret) => {
-          if (!ret.isSuccess) {
-            throwError(ret.description);
-          }
-        })
-      ).subscribe(ret => {
-        this._tipService['primary'](`Batch ${this.batchInfo.batchName} Created!`);
-        this.mask.hide();
-        this._toastService.hide();
-        this.resetForm();
-      },
-        error => {
-          this._tipService.warn(error);
-          this.mask.hide();
-          this._toastService.hide();
-          this.resetForm();
-        }
       );
   }
 
   //#endregion
 
-  //#region Private methods
-
-  isDisable() {
-    return !this.form.valid;
-  }
+  //#region Override methods
 
   resetForm() {
     this.bufferInfo = new MaterialBufferInfo();
@@ -264,9 +231,12 @@ export class CreateBatchComponent {
     this.operatorInfo = new OperatorInfo();
 
     this.inputData = new InputData();
-    this.isInputing = false;
 
     this.batchElem.nativeElement.focus();
+  }
+
+  isValid() {
+    return this.bufferInfo.name && this.batchInfo.batchName && this.operatorInfo.badge;
   }
 
   //#endregion
