@@ -7,7 +7,7 @@
       <div class="weui-cell__bd">
         <input class="weui-input" shareAutoFocus #batch (keydown.enter)='BatchEntered($event)' shareKeyHandler required
           [keyHandler]='{nextInputId: "materialBuffer",inputing: inputing, req: requestBatchData}' name="batch" id='batch'
-          [(ngModel)]='inputData.barcode' placeholder="Pls input Batch Nr" weui-required>
+          [(ngModel)]='inputData.barCode' placeholder="Pls input Batch Nr" weui-required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
@@ -49,3 +49,4 @@
     <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
+<weui-mask #mask [backdrop]="false"></weui-mask>

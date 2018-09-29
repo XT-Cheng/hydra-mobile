@@ -92,9 +92,12 @@ export class NewFetchService {
 
     const ret = barCodeOf2D.split(';');
 
-    if (ret.length !== 3) { return throwError('Batch Label format in-correct'); }
+    if (ret.length !== 3) {
+      return throwError('Batch Label format in-correct');
+    }
 
-    batchInfo.name = ret[0];
+    batchInfo.batchName = ret[0];
+    batchInfo.barCode = barCodeOf2D;
     batchInfo.material = ret[1];
     batchInfo.qty = batchInfo.startQty = parseInt(ret[2], 10);
     return of(batchInfo);
@@ -134,7 +137,7 @@ export class NewFetchService {
     return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
       concatMap((res: any) => {
         if (res.length !== 0) {
-          batchInfo.name = res[0].BATCHNAME;
+          batchInfo.batchName = res[0].BATCHNAME;
           batchInfo.material = res[0].MATERIALNUMBER;
           batchInfo.qty = res[0].REMAINQUANTITY;
           batchInfo.startQty = res[0].QUANTITY;

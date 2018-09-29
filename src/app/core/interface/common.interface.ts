@@ -103,7 +103,8 @@ export class MaterialBufferInfo implements MaterialBufferInfo {
 //#region Batch Info
 
 export interface BatchInfo {
-  name: string;
+  barCode: string;
+  batchName: string;
   startQty: number;
   qty: number;
   material: string;
@@ -114,7 +115,8 @@ export interface BatchInfo {
 }
 
 export class BatchInfo implements BatchInfo {
-  name = '';
+  barCode = '';
+  batchName = '';
   startQty = 0;
   qty = 0;
   material = '';
@@ -122,8 +124,8 @@ export class BatchInfo implements BatchInfo {
   status = '';
   currentLocation = '';
   display(): string {
-    if (this.name) {
-      return `Name: ${this.name}, Mat: ${this.material}, Qty: ${this.qty} Loc: ${this.currentLocation}`;
+    if (this.batchName) {
+      return `Name: ${this.batchName}, Mat: ${this.material}, Qty: ${this.qty} Loc: ${this.currentLocation}`;
     } else {
       return `Name: N/A`;
     }

@@ -3,3 +3,4 @@ export function stopEvent(event) {
   event.stopPropagation();
   event.stopImmediatePropagation();
 }
+
