@@ -1,11 +1,9 @@
-import { Component, HostBinding, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { FetchService } from '@core/hydra/fetch.service';
-import { filter, switchMap } from 'rxjs/operators';
-import { NgForm } from '@angular/forms';
+import { switchMap } from 'rxjs/operators';
 import { ToptipsService, ToastService } from 'ngx-weui';
 import { TitleService } from '@core/title.service';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { BaseForm } from '../base.form';
 import { BatchInfo, MaterialBufferInfo, OperatorInfo } from '@core/interface/common.interface';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
@@ -71,8 +69,8 @@ export class MoveBatchComponent extends BaseForm {
   //#region Batch Reqeust
 
   requestBatchDataSuccess = (ret) => {
-    this.inputData.barCode = this.batchInfo.batchName;
     this.batchInfo = ret;
+    this.inputData.batchName = this.inputData.barCode = this.batchInfo.batchName;
   }
 
   requestBatchDataFailed = () => {
@@ -149,9 +147,11 @@ export class MoveBatchComponent extends BaseForm {
   }
   //#endregion
 
+  //#endregion
+
   //#region Event Handler
 
-  BatchEntered(event) {
+  batchEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['batch'].invalid) {
@@ -162,7 +162,7 @@ export class MoveBatchComponent extends BaseForm {
     this.materialBufferElem.nativeElement.focus();
   }
 
-  MaterialBufferEntered(event) {
+  materialBufferEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['materialBuffer'].invalid) {
@@ -173,7 +173,7 @@ export class MoveBatchComponent extends BaseForm {
     this.operatorElem.nativeElement.focus();
   }
 
-  OperatorEntered(event) {
+  operatorEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['operator'].invalid) {

@@ -73,7 +73,9 @@ export class CreateBatchComponent extends BaseForm {
   //#region Batch Reqeust
 
   requestBatchDataSuccess = (_) => {
-    this.inputData.barCode = this.batchInfo.batchName;
+    this.inputData.material = this.batchInfo.material;
+    this.inputData.qty = this.batchInfo.qty;
+    this.inputData.barCode = this.inputData.batchName = this.batchInfo.batchName;
   }
 
   requestBatchDataFailed = () => {
@@ -87,7 +89,7 @@ export class CreateBatchComponent extends BaseForm {
       return of(this.batchInfo);
     }
 
-    if (this.inputData.barCode === this.batchInfo.barCode) {
+    if (this.inputData.barCode === this.batchInfo.barCode || this.inputData.barCode === this.batchInfo.batchName) {
       return of(this.batchInfo);
     }
 
@@ -166,7 +168,7 @@ export class CreateBatchComponent extends BaseForm {
 
   //#region Event Handler
 
-  BatchEntered(event) {
+  batchEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['batch'].invalid) {
@@ -177,7 +179,7 @@ export class CreateBatchComponent extends BaseForm {
     this.materialBufferElem.nativeElement.focus();
   }
 
-  MaterialBufferEntered(event) {
+  materialBufferEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['materialBuffer'].invalid) {
@@ -188,7 +190,7 @@ export class CreateBatchComponent extends BaseForm {
     this.operatorElem.nativeElement.focus();
   }
 
-  OperatorEntered(event) {
+  operatorEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['operator'].invalid) {

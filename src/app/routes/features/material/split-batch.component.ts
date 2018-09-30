@@ -1,164 +1,206 @@
-import { Component, HostBinding, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { FetchService } from '@core/hydra/fetch.service';
-import { switchMap, filter } from 'rxjs/operators';
-import { NgForm } from '@angular/forms';
+import { switchMap } from 'rxjs/operators';
 import { ToptipsService, ToastService } from 'ngx-weui';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
+import { BatchInfo, OperatorInfo } from '@core/interface/common.interface';
+import { NewFetchService } from '@core/hydra/fetch.new.service';
+import { BaseForm } from '../base.form';
+import { of, throwError } from 'rxjs';
+
+interface InputData {
+  barCode: string;
+  batchName: string;
+  numberOfSplits: string;
+  splittedQty: string;
+  badge: string;
+  remainQty: number;
+  remainQtyDisplay(): string;
+}
+
+class InputData implements InputData {
+  barCode = '';
+  badge = '';
+  batchName = '';
+  numberOfSplits = '';
+  splittedQty = '';
+  remainQty = -1;
+  remainQtyDisplay(): string {
+    return (this.remainQty >= 0 ? `Remain Qty:${this.remainQty}` : `Remain Qty:`);
+  }
+}
 
 @Component({
   selector: 'batch-split',
   templateUrl: 'split-batch.component.html',
   styleUrls: ['./split-batch.component.scss']
 })
-export class SplitBatchComponent {
-  @HostBinding('style.display') display = 'flex';
-  @HostBinding('style.flex-direction') direction = 'column';
-  @HostBinding('style.height') height = '100%';
+export class SplitBatchComponent extends BaseForm {
+  //#region View Children
 
-  @ViewChild('licenseTag') licenseTagElem: ElementRef;
+  @ViewChild('batch') batchElem: ElementRef;
   @ViewChild('numberOfSplits') numberOfSplitsElem: ElementRef;
   @ViewChild('splittedQty') splittedQtyElem: ElementRef;
   @ViewChild('operator') operatorElem: ElementRef;
-  @ViewChild('f') form: NgForm;
 
-  data: any = {
-    licenseTag: '',
-    batchName: '',
-    qty: '',
-    numberOfSplits: '',
-    splitQty: '',
-    remainQty: '',
-    operator: ''
-  };
+  //#endregion
 
-  batchInfo: string;
-  operatorInfo: string;
-  remainQtyInfo: string;
+  //#region Protected member
 
-  results: any[] = [];
+  protected batchInfo: BatchInfo = new BatchInfo();
+  protected operatorInfo: OperatorInfo = new OperatorInfo();
 
-  constructor(private _bapiService: BapiService, private _fetchService: FetchService,
-    private _routeService: Router, private _titleService: TitleService,
-    private _tipService: ToptipsService, private _toastService: ToastService) {
-    this._routeService.events.pipe(
-      filter((event) => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this._titleService.setTitle(`Split Batch`);
-    });
+  protected inputData: InputData = new InputData();
+
+  protected title = `Batch Split`;
+
+  //#endregion
+
+  //#region Constructor
+
+  constructor(
+    private _fetchService: NewFetchService,
+    private _bapiService: BapiService,
+    _routeService: Router,
+    _titleService: TitleService,
+    _toastService: ToastService,
+    _tipService: ToptipsService
+  ) {
+    super(_toastService, _routeService, _tipService, _titleService);
   }
 
-  splitBatch() {
-    const result = {
-      licenseTag: this.data.licenseTag,
-      batchName: this.data.batchName,
-      numberOfSplits: this.data.numberOfSplits,
-      splitQty: this.data.splitQty,
-      remainQty: this.data.remainQty,
-      message: 'Split Batch...',
-      isExecutingBapi: false,
-      operator: this.data.operator,
-      isSuccess: false,
-      timeStamp: new Date()
-    };
+  //#endregion
 
+  //#region Data Request
+
+  //#region Batch Reqeust
+
+  requestBatchDataSuccess = (ret) => {
+    this.batchInfo = ret;
+    this.inputData.barCode = this.batchInfo.batchName;
+  }
+
+  requestBatchDataFailed = () => {
+    this.batchElem.nativeElement.select();
     this.resetForm();
+  }
 
-    this.results.unshift(result);
-
-    // this._toastService['loading']();
-
-    // Update results
-    if (this.results.length > 4) {
-      this.results.pop();
+  requestBatchData = () => {
+    if (!this.inputData.barCode) {
+      this.batchInfo = new BatchInfo();
+      return of(this.batchInfo);
     }
 
-    result.isSuccess = true;
-    result.message = `Batch: ${result.batchName} Split Successfully!`;
-    this.resetForm();
+    if (this.inputData.barCode === this.batchInfo.barCode) {
+      return of(this.batchInfo);
+    }
 
-    // this._fetchService.getBatchInformation(result.splittedBatch).pipe(
-    //   switchMap(ret => {
-    //     if (ret !== null && ret.length !== 0) {
-    //       result.isExecutingBapi = false;
-    //       result.isSuccess = false;
-    //       result.message = `${result.splittedBatch}已经存在`;
-    //       throw Error(result.message);
-    //     }
-
-    //     // Split Batch
-    //     result.isExecutingBapi = true;
-    //     return this._bapiService.splitBatch(result.id, result.licenseTag, result.splittedBatch, result.remainQty,
-    //       result.splittedQty, result.operator);
-    //   })).subscribe(ret => {
-    //     // Set Status
-    //     result.isExecutingBapi = false;
-
-    //     result.isSuccess = ret.isSuccess;
-
-    //     // Update results
-    //     if (result.isSuccess) {
-    //       result.message = `批次: ${result.splittedBatch}, 数量: ${result.splittedQty} 拆分成功`;
-    //     } else {
-    //       result.message = ret.description;
-    //     }
-
-    //     this._toastService.hide();
-    //   },
-    //     error => {
-    //       console.log(error);
-    //       this._toastService.hide();
-    //     });
+    return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
+      switchMap((batchInfo: BatchInfo) => {
+        this.batchInfo = batchInfo;
+        return this._fetchService.getBatchInformation(batchInfo.batchName);
+      }));
   }
 
-  resetForm() {
-    this.form.reset();
-    this.data = {};
-    this.batchInfo = '';
-    this.operatorInfo = '';
+  //#endregion
 
-    this.licenseTagElem.nativeElement.focus();
+  //#region Number of Splits Reqeust
+  requestNumberOfSplitsDataSuccess = () => {
+    this.inputData.remainQty = this.batchInfo.qty - (<any>this.inputData.numberOfSplits * <any>this.inputData.splittedQty);
   }
 
-  LicenseTagEntered(event) {
-    event.preventDefault();
-    if (this.data.licenseTag === '') {
+  requestNumberOfSplitsDataFailed = () => {
+    this.numberOfSplitsElem.nativeElement.focus();
+  }
+
+  requestNumberOfSplitsData = () => {
+    if (this.inputData.splittedQty) {
+      if (<any>this.inputData.numberOfSplits * <any>this.inputData.splittedQty > this.batchInfo.qty) {
+        return throwError('Exceed mother batch quantity');
+      }
+    }
+
+    return of(null);
+  }
+
+  //#endregion
+
+  //#region Child Qty Reqeust
+  requestSplittedQtyDataSuccess = () => {
+    this.inputData.remainQty = this.batchInfo.qty - (<any>this.inputData.numberOfSplits * <any>this.inputData.splittedQty);
+  }
+
+  requestSplittedQtyDataFailed = () => {
+    this.splittedQtyElem.nativeElement.focus();
+  }
+
+  requestSplittedQtyData = () => {
+    if (this.inputData.numberOfSplits) {
+      if (<any>this.inputData.numberOfSplits * <any>this.inputData.splittedQty > this.batchInfo.qty) {
+        return throwError('Exceed mother batch quantity');
+      }
+    }
+
+    return of(null);
+  }
+
+  //#endregion
+
+  //#region Operator Reqeust
+
+  requestOperatorDataSuccess = (operatorInfo) => {
+    this.operatorInfo = operatorInfo;
+  }
+
+  requestOperatorDataFailed = () => {
+    this.operatorInfo = new OperatorInfo();
+    this.operatorElem.nativeElement.select();
+  }
+
+  requestOperatorData = () => {
+    if (!this.inputData.badge) {
+      this.operatorInfo = new OperatorInfo();
+      return of(this.operatorInfo);
+    }
+
+    if (this.inputData.badge === this.operatorInfo.badge) {
+      return of(this.operatorInfo);
+    }
+
+    return this._fetchService.getOperatorByBadge(this.inputData.badge);
+  }
+  //#endregion
+
+  //#region Event Handler
+
+  BatchEntered(event) {
+    this.stopEvent(event);
+
+    if (this.form.controls['batch'].invalid) {
+      this.batchElem.nativeElement.select();
       return;
     }
 
-    this._toastService['loading']();
+    this.numberOfSplitsElem.nativeElement.focus();
+  }
 
-    this._fetchService.getLicenseTagFrom2DBarCode(this.data.licenseTag).pipe(
-      switchMap(ret => {
-        return this._fetchService.getBatchInformation(ret.BATCHNAME);
-      })
-    ).subscribe((ret) => {
-      this._toastService.hide();
-      if (ret === null || ret.length === 0) {
-        this._tipService['warn'](`Batch ${this.data.batchName} not exsit！`);
-        this.resetForm();
-      } else {
-        this.data.batchName = ret[0].BATCHNAME;
-        this.data.qty = ret[0].REMAINQUANTITY;
-        this.batchInfo = `Batch: ${ret[0].BATCHNAME},Current Loc.: ${ret[0].LOCDESC}, Qty：${ret[0].REMAINQUANTITY}`;
-        this.numberOfSplitsElem.nativeElement.focus();
-      }
-    }, err => {
-      this._toastService.hide();
-      this._tipService['warn'](`Error: ${err}！`);
-      this.resetForm();
-    });
+  OperatorEntered(event) {
+    this.stopEvent(event);
+
+    if (this.form.controls['operator'].invalid) {
+      this.operatorElem.nativeElement.select();
+      return;
+    }
+
+    this.operatorElem.nativeElement.blur();
   }
 
   NumberOfSplitsEntered(event) {
-    event.preventDefault();
+    this.stopEvent(event);
 
-    if (this.data.licenseTag === '') {
-      return;
-    }
-
-    if (this.data.splittedBatch === '') {
+    if (this.form.controls['numberOfSplits'].invalid) {
+      this.numberOfSplitsElem.nativeElement.select();
       return;
     }
 
@@ -166,83 +208,122 @@ export class SplitBatchComponent {
   }
 
   SplittedQtyEntered(event) {
-    event.preventDefault();
+    this.stopEvent(event);
 
-    if (this.data.licenseTag === '') {
+    if (this.form.controls['splittedQty'].invalid) {
+      this.splittedQtyElem.nativeElement.select();
       return;
     }
-
-    if (this.data.splittedBatch === '') {
-      return;
-    }
-
-    if (this.data.splittedQty === '') {
-      return;
-    }
-
-    if (this.data.numberOfSplits * this.data.splittedQty > this.data.qty) {
-      this._tipService['warn'](`Batch Quantity is not enough!`);
-      this.data.splittedQty = '';
-      this.splittedQtyElem.nativeElement.focus();
-      return;
-    }
-
-    this.data.remainQty = this.data.qty - (this.data.numberOfSplits * this.data.splittedQty);
-    this.remainQtyInfo = `Remain Qty：${this.data.remainQty}`;
 
     this.operatorElem.nativeElement.focus();
   }
 
-  OperatorEntered(event) {
-    event.preventDefault();
+  //#endregion
 
-    if (this.data.licenseTag === '') {
-      return;
-    }
-
-    if (this.data.operator === '') {
-      return;
-    }
-
-    this._toastService['loading']();
-
-    this._fetchService.getOperator(this.data.operator).subscribe(ret => {
-      this._toastService.hide();
-      if (ret === null || ret.length === 0) {
-        this._tipService['warn'](`Operator ${this.data.operator} not exist！`);
-        this.resetForm();
-      } else {
-        this.operatorInfo = `Operator ${ret[0].NAME}`;
-        this.splitBatch();
-      }
-    }, err => {
-      this._toastService.hide();
-      this._tipService['warn'](`Error: ${err}！`);
-      this.resetForm();
-    });
+  //#region Exeuction
+  splitBatchSuccess = () => {
+    this._tipService['primary'](`Batch ${this.batchInfo.batchName} Splitted!`);
   }
 
-  getResultClass(result) {
-    return {
-      'weui-icon-success': this.showSuccess(result),
-      'weui-icon-warn': this.showError(result),
-      'weui-loading': this.showLoading(result)
-    };
+  splitBatchFailed = () => {
+    this.batchElem.nativeElement.focus();
   }
 
-  isDisable() {
-    return !this.form.valid;
+  splitBatch = () => {
+    // Split Batch
+    return this._bapiService.splitBatch(this.batchInfo, parseInt(this.inputData.numberOfSplits, 10),
+      parseInt(this.inputData.splittedQty, 10), this.operatorInfo.badge);
   }
 
-  showLoading(result): boolean {
-    return result.isFetchingLicenseTag || result.isExecutingBapi;
+  //#endregion
+
+  //#region Override methods
+
+  resetForm() {
+    this.batchInfo = new BatchInfo();
+    this.operatorInfo = new OperatorInfo();
+
+    this.inputData = new InputData();
+
+    this.batchElem.nativeElement.focus();
   }
 
-  showSuccess(result): boolean {
-    return result.isSuccess;
+  isValid() {
+    return this.batchInfo.batchName
+      && this.operatorInfo.badge;
   }
 
-  showError(result): boolean {
-    return !result.isSuccess && !this.showLoading(result);
-  }
+  //#endregion
+
+  // splitBatch() {
+  //   const result = {
+  //     licenseTag: this.data.licenseTag,
+  //     batchName: this.data.batchName,
+  //     numberOfSplits: this.data.numberOfSplits,
+  //     splitQty: this.data.splitQty,
+  //     remainQty: this.data.remainQty,
+  //     message: 'Split Batch...',
+  //     isExecutingBapi: false,
+  //     operator: this.data.operator,
+  //     isSuccess: false,
+  //     timeStamp: new Date()
+  //   };
+
+  //   this.resetForm();
+
+  //   this.results.unshift(result);
+
+  //   // this._toastService['loading']();
+
+  //   // Update results
+  //   if (this.results.length > 4) {
+  //     this.results.pop();
+  //   }
+
+  //   result.isSuccess = true;
+  //   result.message = `Batch: ${result.batchName} Split Successfully!`;
+  //   this.resetForm();
+
+  //   // this._fetchService.getBatchInformation(result.splittedBatch).pipe(
+  //   //   switchMap(ret => {
+  //   //     if (ret !== null && ret.length !== 0) {
+  //   //       result.isExecutingBapi = false;
+  //   //       result.isSuccess = false;
+  //   //       result.message = `${result.splittedBatch}已经存在`;
+  //   //       throw Error(result.message);
+  //   //     }
+
+  //   //     // Split Batch
+  //   //     result.isExecutingBapi = true;
+  //   //     return this._bapiService.splitBatch(result.id, result.licenseTag, result.splittedBatch, result.remainQty,
+  //   //       result.splittedQty, result.operator);
+  //   //   })).subscribe(ret => {
+  //   //     // Set Status
+  //   //     result.isExecutingBapi = false;
+
+  //   //     result.isSuccess = ret.isSuccess;
+
+  //   //     // Update results
+  //   //     if (result.isSuccess) {
+  //   //       result.message = `批次: ${result.splittedBatch}, 数量: ${result.splittedQty} 拆分成功`;
+  //   //     } else {
+  //   //       result.message = ret.description;
+  //   //     }
+
+  //   //     this._toastService.hide();
+  //   //   },
+  //   //     error => {
+  //   //       console.log(error);
+  //   //       this._toastService.hide();
+  //   //     });
+  // }
+
+  // resetForm() {
+  //   this.form.reset();
+  //   this.data = {};
+  //   this.batchInfo = '';
+  //   this.operatorInfo = '';
+
+  //   this.batchElem.nativeElement.focus();
+  // }
 }

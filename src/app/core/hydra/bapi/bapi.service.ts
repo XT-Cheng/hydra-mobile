@@ -18,131 +18,109 @@ import { InterruptOperation } from '@core/hydra/bapi/interrupt.operation';
 import { LogoffOperation } from '@core/hydra/bapi/logoff.operation';
 import { GenerateBatchConnection } from '@core/hydra/bapi/generate.batchConnection';
 import { PartialConfirmOperation } from '@core/hydra/bapi/partialConfirm.operation';
+import { NewFetchService } from '@core/hydra/fetch.new.service';
+import { BatchInfo } from '@core/interface/common.interface';
 
 
 @Injectable()
 export class BapiService {
   url = 'bapi';
 
-  constructor(protected http: HttpClient, private _fetchService: FetchService) {
+  constructor(protected http: HttpClient, private _fetchService: FetchService, private _newFetchService: NewFetchService) {
   }
 
   createBatch(batchName: string, materialNumber: string, batchQty: number,
     materialBuffer: string, badge: string): Observable<IBapiResult> {
-    const data = new CreateBatch(batchName, materialNumber, batchQty, materialBuffer, badge);
-    console.log(`Dialog String: ${data.dialogString()}`);
-    return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() })
-      .pipe(
-        map((res: any) => {
-          return this.getResult(res);
-        })
-      );
+    return new CreateBatch(batchName, materialNumber, batchQty, materialBuffer, badge).execute(this.http);
   }
 
   mergeBatch(box: string, toBeMerged: string[], badgeName: string) {
-    const operations: OperatorFunction<any, any>[] = [];
-    const obs$: Observable<any> = of('start');
+    // const operations: OperatorFunction<any, any>[] = [];
+    // const obs$: Observable<any> = of('start');
 
-    let mergedBatchId: string;
-    let toBeMergedBatchId: string;
-    let totalQty = 0;
+    // let mergedBatchId: string;
+    // let toBeMergedBatchId: string;
+    // let totalQty = 0;
 
-    // Update each Child Batch
-    toBeMerged.forEach(batch => {
-      operations.push(switchMap(() => {
-        return this._fetchService.getBatchInformation(batch);
-      }));
-      operations.push(switchMap(ret => {
-        totalQty += ret[0].REMAINQUANTITY;
-        // Update Batch
-        const update = new UpdateBatch(ret[0].ID, badgeName, null, 0, null, 'A');
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: update.dialogString() });
-      }));
-    });
+    // // Update each Child Batch
+    // toBeMerged.forEach(batch => {
+    //   operations.push(switchMap(() => {
+    //     return this._fetchService.getBatchInformation(batch);
+    //   }));
+    //   operations.push(switchMap(ret => {
+    //     totalQty += ret[0].REMAINQUANTITY;
+    //     // Update Batch
+    //     const update = new UpdateBatch(ret[0].ID, badgeName, null, 0, null, 'A');
+    //     return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: update.dialogString() });
+    //   }));
+    // });
 
-    // Create Merged Batch
-    operations.push(switchMap(() => {
-      return this._fetchService.getBatchInformation(toBeMerged[0]);
-    }));
-    operations.push(switchMap(res => {
-      const gen = new GenerateBatchName('P');
-      toBeMergedBatchId = res[0].ID;
-      return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: gen.dialogString() });
-    }));
-    operations.push(switchMap((res: any) => {
-      const array: Array<string> = res.content.split('|');
-      mergedBatchId = array.find((item: string) => item.search(`NR=`) > -1)
-        .replace('NR=', '').trimRight();
-      const copy = new CopyBatch(toBeMergedBatchId, mergedBatchId, box, totalQty, badgeName, 'F');
-      return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: copy.dialogString() });
-    }));
+    // // Create Merged Batch
+    // operations.push(switchMap(() => {
+    //   return this._fetchService.getBatchInformation(toBeMerged[0]);
+    // }));
+    // operations.push(switchMap(res => {
+    //   const gen = new GenerateBatchName('P');
+    //   toBeMergedBatchId = res[0].ID;
+    //   return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: gen.dialogString() });
+    // }));
+    // operations.push(switchMap((res: any) => {
+    //   const array: Array<string> = res.content.split('|');
+    //   mergedBatchId = array.find((item: string) => item.search(`NR=`) > -1)
+    //     .replace('NR=', '').trimRight();
+    //   const copy = new CopyBatch(toBeMergedBatchId, mergedBatchId, box, totalQty, badgeName, 'F');
+    //   return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: copy.dialogString() });
+    // }));
 
-    // Insert Batch Connectoin
-    toBeMerged.forEach(batch => {
-      operations.push(switchMap(() => {
-        return this._fetchService.getBatchInformation(batch);
-      }));
-      operations.push(switchMap(ret => {
-        // Insert Batch Connectoin
-        const connection = new GenerateBatchConnection(batch, mergedBatchId,
-          ret[0].MATERIALNUMBER, ret[0].MATERIALNUMBER,
-          ret[0].MATERIALTYPE, ret[0].MATERIALTYPE);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: connection.dialogString() });
-      }));
-    });
+    // // Insert Batch Connectoin
+    // toBeMerged.forEach(batch => {
+    //   operations.push(switchMap(() => {
+    //     return this._fetchService.getBatchInformation(batch);
+    //   }));
+    //   operations.push(switchMap(ret => {
+    //     // Insert Batch Connectoin
+    //     const connection = new GenerateBatchConnection(batch, mergedBatchId,
+    //       ret[0].MATERIALNUMBER, ret[0].MATERIALNUMBER,
+    //       ret[0].MATERIALTYPE, ret[0].MATERIALTYPE);
+    //     return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: connection.dialogString() });
+    //   }));
+    // });
 
-    return obs$.pipe<any>(...operations);
+    // return obs$.pipe<any>(...operations);
   }
 
-  splitBatch(id: string, originalBatch: string, splitBatch: string, remainQty: number,
-    splitQty: number, badge: string): Observable<IBapiResult> {
-    let newBatchId = '';
-    const gen = new GenerateBatchName('W');
-
-    let mother, child;
-
-    // Get new Batch as Output Batch
-    return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: gen.dialogString() }).pipe(
-      switchMap((res: any) => {
-        const array: Array<string> = res.content.split('|');
-        newBatchId = array.find((item: string) => item.search(`NR=`) > -1)
-          .replace('NR=', '').trimRight();
-        const copy = new CopyBatch(id, newBatchId, splitBatch, splitQty, badge);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: copy.dialogString() });
-      }),
-      switchMap(() => {
-        return this._fetchService.getBatchInformation(originalBatch);
-      }),
-      switchMap((ret) => {
-        mother = ret[0];
-        return this._fetchService.getBatchInformation(splitBatch);
-      }),
-      switchMap((ret) => {
-        child = ret[0];
-        const connection = new GenerateBatchConnection(id, newBatchId,
-          mother.MATERIALNUMBER, child.MATERIALNUMBER,
-          mother.MATERIALTYPE, child.MATERIALTYPE);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: connection.dialogString() });
-      }),
-      switchMap(() => {
-        const update = new UpdateBatch(id, badge, null, remainQty);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: update.dialogString() });
-      }),
-      map((res: any) => {
-        return this.getResult(res);
-      })
-    );
+  splitBatch(batchInfo: BatchInfo, numberOfChildren: number, childQty: number, badge: string): Observable<IBapiResult> {
+    return Array.from(Array(numberOfChildren + 1)).reduce((next$, currentValue, currentIndex) => {
+      if (currentIndex === numberOfChildren) {
+        return next$.pipe(
+          switchMap(() => {
+            return new UpdateBatch(batchInfo.batchName, badge, batchInfo.qty).execute(this.http);
+          }));
+      } else {
+        return next$.pipe(
+          switchMap(_ => {
+            return new GenerateBatchName('W').execute(this.http);
+          }),
+          switchMap((res: IBapiResult) => {
+            const array: Array<string> = res.content.split('|');
+            const newBatchName = array.find((item: string) => item.search(`NR=`) > -1)
+              .replace('NR=', '').trimRight();
+            return new CopyBatch(batchInfo.batchName, newBatchName, childQty, badge).execute(this.http).pipe(
+              map(_ => newBatchName)
+            );
+          }),
+          switchMap((newBatchName: string) => {
+            batchInfo.qty -= childQty;
+            return new GenerateBatchConnection(batchInfo.batchName, newBatchName,
+              batchInfo.material, batchInfo.material,
+              batchInfo.materialType, batchInfo.materialType).execute(this.http);
+          }));
+      }
+    }, of('start'));
   }
 
   moveBatch(id: string, destination: string, badge: string): Observable<IBapiResult> {
-    const data = new MoveBatch(id, destination, badge);
-    console.log(`Dialog String: ${data.dialogString()}`);
-    return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() })
-      .pipe(
-        map((res: any) => {
-          return this.getResult(res);
-        })
-      );
+    return new MoveBatch(id, destination, badge).execute(this.http);
   }
 
   logonBatch(operation: string, machineName: string, badgeName: string,
@@ -244,10 +222,10 @@ export class BapiService {
         const data = new ChangeOutputBatch(operation, machineName, badgeName, newBatch, qty);
         return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
       }),
-      switchMap(() => {
-        const data = new UpdateBatch(currentBatchId, badgeName, batchName, null);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
-      }),
+      // switchMap(() => {
+      // const data = new UpdateBatch(currentBatchId, badgeName, batchName, null);
+      // return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
+      // }),
       map((res: any) => {
         return this.getResult(res);
       })
@@ -267,10 +245,10 @@ export class BapiService {
         const data = new ChangeOutputBatch(operation, machineName, badgeName, newBatch, 1);
         return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
       }),
-      switchMap(() => {
-        const data = new UpdateBatch(currentBatchId, badgeName, batchName, null);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
-      }),
+      // switchMap(() => {
+      //   const data = new UpdateBatch(currentBatchId, badgeName, batchName, null);
+      //   return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
+      // }),
       map((res: any) => {
         return this.getResult(res);
       })

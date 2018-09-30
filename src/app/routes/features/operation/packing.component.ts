@@ -137,26 +137,26 @@ export class PackingComponent {
       toBeMergedIds.push(sn.BATCHNAME);
     });
 
-    this._bapiService.mergeBatch(this.data.box, toBeMergedIds, this.data.operator).pipe(
-      tap(res => {
-        if (!res.isSuccess) {
-          throw Error(res.description);
-        }
-        // res.forEach(element => {
-        //   if (!element.isSuccess) {
-        //     throw Error(element.description);
-        //   }
-        // });
-      })
-    ).subscribe(ret => {
-      this._tipService['primary'](`箱号${this.data.box}生成成功！`);
-      this._toastService.hide();
-      this.resetForm();
-    }, err => {
-      this._tipService.warn(err);
-      this._toastService.hide();
-      this.resetForm();
-    });
+    // this._bapiService.mergeBatch(this.data.box, toBeMergedIds, this.data.operator).pipe(
+    //   tap(res => {
+    //     if (!res.isSuccess) {
+    //       throw Error(res.description);
+    //     }
+    // res.forEach(element => {
+    //   if (!element.isSuccess) {
+    //     throw Error(element.description);
+    //   }
+    // });
+    //   })
+    // ).subscribe(ret => {
+    //   this._tipService['primary'](`箱号${this.data.box}生成成功！`);
+    //   this._toastService.hide();
+    //   this.resetForm();
+    // }, err => {
+    //   this._tipService.warn(err);
+    //   this._toastService.hide();
+    //   this.resetForm();
+    // });
   }
 
   resetForm() {

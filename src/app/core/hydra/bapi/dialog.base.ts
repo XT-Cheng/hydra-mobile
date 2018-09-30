@@ -1,6 +1,12 @@
-import { DialogTypeEnum, DIALOG_USER } from '@core/hydra/bapi/constants';
+import { DialogTypeEnum, DIALOG_USER, IBapiResult } from '@core/hydra/bapi/constants';
+import { Observable, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { WEBAPI_HOST } from '@core/constants';
+import { map, tap } from 'rxjs/operators';
 
 export abstract class DialogBase {
+  private url = 'bapi';
+
   protected _dialogDate: Date;
   protected _date: Date;
 
@@ -46,5 +52,26 @@ export abstract class DialogBase {
     }
 
     return str;
+  }
+
+  private getResult(res: any) {
+    return {
+      isSuccess: res.isSuccess,
+      error: res.error,
+      description: res.description,
+      content: res.content
+    };
+  }
+
+  public execute(http: HttpClient): Observable<IBapiResult> {
+    return http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: this.dialogString() }).pipe(
+      map((res: any) => {
+        return this.getResult(res);
+      }),
+      tap((ret: IBapiResult) => {
+        if (!ret.isSuccess) {
+          throwError(ret.description);
+        }
+      }));
   }
 }

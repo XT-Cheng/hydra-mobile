@@ -23,4 +23,5 @@ export interface IBapiResult {
   isSuccess: boolean;
   error: string;
   description: string;
+  content: string;
 }

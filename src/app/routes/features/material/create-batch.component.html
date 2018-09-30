@@ -5,7 +5,7 @@
         <label class="weui-label">Batch Nr</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" shareAutoFocus #batch (keydown.enter)='BatchEntered($event)' shareKeyHandler required
+        <input class="weui-input" shareAutoFocus #batch (keydown.enter)='batchEntered($event)' shareKeyHandler required
           [keyHandler]='{nextInputId: "materialBuffer",inputing: inputing, req: request(requestBatchData, requestBatchDataSuccess, requestBatchDataFailed)}'
           name="batch" id='batch' [(ngModel)]='inputData.barCode' placeholder="Pls input Batch Nr" weui-required>
       </div>
@@ -21,7 +21,7 @@
       </div>
       <div class="weui-cell__bd">
         <input class="weui-input" #materialBuffer shareKeyHandler required [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestMaterialBufferData, requestMaterialBufferDataSuccess, requestMaterialBufferDataFailed)}'
-          (keydown.enter)='MaterialBufferEntered($event)' name="materialBuffer" id="materialBuffer" [(ngModel)]='inputData.materialBuffer'
+          (keydown.enter)='materialBufferEntered($event)' name="materialBuffer" id="materialBuffer" [(ngModel)]='inputData.materialBuffer'
           placeholder="Pls input Storage Loc." weui-required>
       </div>
     </div>
@@ -36,7 +36,7 @@
       </div>
       <div class="weui-cell__bd">
         <input class="weui-input" #operator shareKeyHandler required [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
-          (keydown.enter)='OperatorEntered($event)' name="operator" id="operator" [(ngModel)]='inputData.badge'
+          (keydown.enter)='operatorEntered($event)' name="operator" id="operator" [(ngModel)]='inputData.badge'
           placeholder="Pls input Operator" weui-required>
       </div>
     </div>

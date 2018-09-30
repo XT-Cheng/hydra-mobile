@@ -97,7 +97,6 @@ export abstract class BaseForm {
     this.start();
 
     handler().pipe(
-      delay(5000),
       tap((ret: IBapiResult) => {
         if (!ret.isSuccess) {
           throwError(ret.description);

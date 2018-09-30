@@ -5,13 +5,14 @@
         <label class="weui-label">Batch Nr</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #licenseTag (keydown.enter)='LicenseTagEntered($event)' shareAutoFocus name="licenseTag"
-          [(ngModel)]='data.licenseTag' placeholder="Pls input Batch Nr" weui-required required>
+        <input class="weui-input" #batch (keydown.enter)='BatchEntered($event)' shareAutoFocus name="batch" id="batch"
+          [(ngModel)]='inputData.barCode' shareKeyHandler [keyHandler]='{nextInputId: "numberOfSplits",inputing: inputing, req: request(requestBatchData, requestBatchDataSuccess, requestBatchDataFailed)}'
+          placeholder="Pls input Batch Nr" weui-required required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{batchInfo}}
+        {{batchInfo.display()}}
       </span>
     </label>
     <div class="weui-cell">
@@ -19,9 +20,10 @@
         <label class="weui-label">Nr. of Splits</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" weui-input='number' #numberOfSplits (keydown.enter)='NumberOfSplitsEntered($event)'
-          name="numberOfSplits" [(ngModel)]='data.numberOfSplits' placeholder="Pls input Nr. of Splits" weui-required
-          required>
+        <input class="weui-input" weui-input='number' [shareMin]="1" #numberOfSplits (keydown.enter)='NumberOfSplitsEntered($event)'
+          shareKeyHandler [keyHandler]='{nextInputId: "splittedQty",inputing: inputing, req: request(requestNumberOfSplitsData, requestNumberOfSplitsDataSuccess, requestNumberOfSplitsDataFailed)}'
+          name="numberOfSplits" id="numberOfSplits" [(ngModel)]='inputData.numberOfSplits' placeholder="Pls input Nr. of Splits"
+          weui-required required>
       </div>
     </div>
     <div class="weui-cell">
@@ -29,13 +31,15 @@
         <label class="weui-label">Child Qty</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" weui-input='number' #splittedQty (keydown.enter)='SplittedQtyEntered($event)' name="splittedQty"
-          [(ngModel)]='data.splittedQty' placeholder="Pls input split qty" weui-required required>
+        <input class="weui-input" weui-input='number' [shareMin]="1" #splittedQty (keydown.enter)='SplittedQtyEntered($event)'
+          shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestSplittedQtyData, requestSplittedQtyDataSuccess, requestSplittedQtyDataFailed)}'
+          name="splittedQty" id="splittedQty" [(ngModel)]='inputData.splittedQty' placeholder="Pls input split qty"
+          weui-required required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{remainQtyInfo}}
+        {{inputData.remainQtyDisplay()}}
       </span>
     </label>
     <div class="weui-cell">
@@ -43,27 +47,18 @@
         <label class="weui-label">Operator</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='data.operator'
+        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" id="operator"
+          [(ngModel)]='inputData.badge' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
           placeholder="Pls input Operator" weui-required required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{operatorInfo}}
+        {{operatorInfo.display()}}
       </span>
     </label>
-    <button weui-button [disabled]='isDisable()' (click)='splitBatch()'>Split</button>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(splitBatch, splitBatchSuccess, splitBatchFailed)'>Split</button>
     <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
-<div class="weui-cells">
-  <a *ngFor='let ret of results' class="weui-cell weui-cell_access" href="javascript:;">
-    <div class="weui-cell__hd">
-      <i [ngClass]='getResultClass(ret)'></i>
-    </div>
-    <div class="weui-cell__bd">
-      <p>{{ret.message}}</p>
-    </div>
-    <div class="weui-cell__ft">{{ret.timeStamp | date: 'yyyy/MM/dd, HH:mm:ss'}}</div>
-  </a>
-</div>
+<weui-mask #mask [backdrop]="false"></weui-mask>
