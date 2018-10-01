@@ -119,6 +119,10 @@ export class BapiService {
     }, of('start'));
   }
 
+  updateBatch(batchName: string, badge: string, newQty: number): Observable<IBapiResult> {
+    return new UpdateBatch(batchName, badge, newQty).execute(this.http);
+  }
+
   moveBatch(id: string, destination: string, badge: string): Observable<IBapiResult> {
     return new MoveBatch(id, destination, badge).execute(this.http);
   }

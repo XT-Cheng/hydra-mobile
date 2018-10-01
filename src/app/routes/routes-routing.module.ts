@@ -21,6 +21,7 @@ import { PackingComponent } from './features/operation/packing.component';
 import { LogoffInputBatchComponent } from './features/operation/logoffInputBatch-operation.component';
 import { FindBatchComponent } from './features/material/findBatch.component';
 import { PartialConfirmOperationComponent } from './features/operation/partialConfirm-operation.component';
+import { AdjustBatchQuantityComponent } from './features/material/adjust-batch-quantity.component';
 
 const routes: Routes = [
   {
@@ -42,6 +43,7 @@ const routes: Routes = [
       { path: 'material/create', component: CreateBatchComponent },
       { path: 'material/move', component: MoveBatchComponent },
       { path: 'material/split', component: SplitBatchComponent },
+      { path: 'material/adjustBatchQantity', component: AdjustBatchQuantityComponent },
       { path: 'material/find', component: FindBatchComponent },
     ]
   },

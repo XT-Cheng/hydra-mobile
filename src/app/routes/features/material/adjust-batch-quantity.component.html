@@ -1,0 +1,48 @@
+<form #f="ngForm">
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Batch Nr</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #batch (keydown.enter)='batchEntered($event)' shareAutoFocus name="batch" id="batch"
+          [(ngModel)]='inputData.barCode' shareKeyHandler [keyHandler]='{nextInputId: "newQty",inputing: inputing, req: request(requestBatchData, requestBatchDataSuccess, requestBatchDataFailed)}'
+          placeholder="Pls input Batch Nr" weui-required required>
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{batchInfo.display()}}
+      </span>
+    </label>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">New Qty</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" [shareMin]='1' required weui-input='number' #newQty shareKeyHandler name="newQty" id='newQty'
+          (keydown.enter)='newQtyEntered($event)' [(ngModel)]='inputData.newQty' placeholder="Pls input New Qty">
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Operator</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #operator shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
+          (keydown.enter)='operatorEntered($event)' name="operator" id="operator" [(ngModel)]='inputData.badge'
+          required placeholder="Pls input Operator" weui-required required>
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{operatorInfo.display()}}
+      </span>
+    </label>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(adjustQuantity, adjustQuantitySuccess, adjustQuantityFailed)'>
+      Adjust Qty
+    </button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
+  </div>
+</form>
+<weui-mask #mask [backdrop]="false"></weui-mask>

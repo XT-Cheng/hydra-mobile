@@ -23,6 +23,7 @@ import { PackingComponent } from './features/operation/packing.component';
 import { LogoffInputBatchComponent } from './features/operation/logoffInputBatch-operation.component';
 import { FindBatchComponent } from './features/material/findBatch.component';
 import { PartialConfirmOperationComponent } from './features/operation/partialConfirm-operation.component';
+import { AdjustBatchQuantityComponent } from './features/material/adjust-batch-quantity.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
@@ -46,7 +47,8 @@ const MATERIAL_COMPONENTS = [
   MaterialListComponent,
   CreateBatchComponent,
   MoveBatchComponent,
-  SplitBatchComponent
+  SplitBatchComponent,
+  AdjustBatchQuantityComponent
 ];
 
 const AUTH_COMPONENTS = [

@@ -113,7 +113,7 @@ export abstract class BaseForm {
   }
 
   protected isDisable() {
-    return !this.form.valid || !this.isValid();
+    return !this.form.valid || this.isInputing || !this.isValid();
   }
 
   //#endregion
