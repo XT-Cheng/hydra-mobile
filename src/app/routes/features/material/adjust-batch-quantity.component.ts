@@ -129,6 +129,8 @@ export class AdjustBatchQuantityComponent extends BaseForm {
 
   //#endregion
 
+  //#endregion
+
   //#region Event Handler
 
   batchEntered(event) {

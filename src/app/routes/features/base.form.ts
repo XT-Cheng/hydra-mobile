@@ -35,7 +35,7 @@ export abstract class BaseForm {
 
   constructor(protected _toastService: ToastService, protected _routeService: Router,
     protected _tipService: ToptipsService,
-    protected _titleService: TitleService) {
+    protected _titleService: TitleService, protected _resetFormAfterSuccessExecution = true) {
     this._routeService.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(event => {
@@ -105,7 +105,9 @@ export abstract class BaseForm {
       )).subscribe((ret) => {
         success(ret);
         this.end();
-        this.resetForm();
+        if (this._resetFormAfterSuccessExecution) {
+          this.resetForm();
+        }
       }, (err) => {
         failed(err);
         this.end();

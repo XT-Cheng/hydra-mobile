@@ -30,15 +30,17 @@ export class MachineInfo implements MachineInfo {
   currentMotherOperationDescription(): string {
     return `Current FG OP :${this.currentMotherOperation ? this.currentMotherOperation : 'N/A'}`;
   }
+  currentOPDisplay(): string {
+    return `${this.currentMotherOperationDescription()}, ${this.currentOperationDescription()}`;
+  }
   nextOperationDescription(): string {
     return `Next OP :${this.nextOperation ? this.nextOperation : 'N/A'}`;
   }
   nextMotherOperationDescription(): string {
     return `Next FG OP :${this.nextMotherOperation ? this.nextMotherOperation : 'N/A'}`;
   }
-
-  currentOPDisplay(): string {
-    return `${this.currentMotherOperationDescription()}, ${this.currentOperationDescription()}`;
+  nextOPDisplay(): string {
+    return `${this.nextOperationDescription()}, ${this.nextMotherOperationDescription()}`;
   }
 }
 
@@ -131,6 +133,30 @@ export class BatchInfo implements BatchInfo {
     }
   }
 }
+//#endregion
+
+//#region Component Info
+
+export interface ComponentInfo {
+  operatoin: string;
+  position: number;
+  usage: number;
+  unit: string;
+  material: string;
+  inputBatch: string;
+  inputBatchQty: number;
+}
+
+export class ComponentInfo implements ComponentInfo {
+  operatoin = '';
+  position = -1;
+  usage = 0;
+  unit = '';
+  material = '';
+  inputBatch = '';
+  inputBatchQty = 0;
+}
+
 //#endregion
 
 //#region Input Data

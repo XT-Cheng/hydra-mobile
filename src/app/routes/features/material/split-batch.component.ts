@@ -174,7 +174,7 @@ export class SplitBatchComponent extends BaseForm {
 
   //#region Event Handler
 
-  BatchEntered(event) {
+  batchEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['batch'].invalid) {
@@ -185,7 +185,7 @@ export class SplitBatchComponent extends BaseForm {
     this.numberOfSplitsElem.nativeElement.focus();
   }
 
-  OperatorEntered(event) {
+  operatorEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['operator'].invalid) {
@@ -196,7 +196,7 @@ export class SplitBatchComponent extends BaseForm {
     this.operatorElem.nativeElement.blur();
   }
 
-  NumberOfSplitsEntered(event) {
+  numberOfSplitsEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['numberOfSplits'].invalid) {
@@ -207,7 +207,7 @@ export class SplitBatchComponent extends BaseForm {
     this.splittedQtyElem.nativeElement.focus();
   }
 
-  SplittedQtyEntered(event) {
+  splittedQtyEntered(event) {
     this.stopEvent(event);
 
     if (this.form.controls['splittedQty'].invalid) {

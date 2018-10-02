@@ -21,9 +21,11 @@ import { InterruptOperationComponent } from './features/operation/interrupt-oper
 import { LogoffOperationComponent } from './features/operation/logoff-operation.component';
 import { PackingComponent } from './features/operation/packing.component';
 import { LogoffInputBatchComponent } from './features/operation/logoffInputBatch-operation.component';
-import { FindBatchComponent } from './features/material/findBatch.component';
+import { FindBatchComponent } from './features/material/find-batch.component';
 import { PartialConfirmOperationComponent } from './features/operation/partialConfirm-operation.component';
 import { AdjustBatchQuantityComponent } from './features/material/adjust-batch-quantity.component';
+import { LogonBatchComponent } from './features/material/logon-batch.component';
+import { LogoffBatchComponent } from './features/material/logoff-batch.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
@@ -48,7 +50,9 @@ const MATERIAL_COMPONENTS = [
   CreateBatchComponent,
   MoveBatchComponent,
   SplitBatchComponent,
-  AdjustBatchQuantityComponent
+  AdjustBatchQuantityComponent,
+  LogonBatchComponent,
+  LogoffBatchComponent
 ];
 
 const AUTH_COMPONENTS = [

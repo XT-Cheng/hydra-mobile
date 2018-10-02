@@ -129,26 +129,12 @@ export class BapiService {
 
   logonBatch(operation: string, machineName: string, badgeName: string,
     batchId: string, material: string, pos: number) {
-    const data = new LogonInputBatch(operation, machineName, badgeName, batchId, material, pos);
-
-    return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() })
-      .pipe(
-        map((res: any) => {
-          return this.getResult(res);
-        })
-      );
+    return new LogonInputBatch(operation, machineName, badgeName, batchId, material, pos).execute(this.http);
   }
 
   logoffBatch(operation: string, machineName: string, badgeName: string,
     batchId: string, pos: number) {
-    const data = new LogoffInputBatch(operation, machineName, badgeName, batchId, pos);
-
-    return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() })
-      .pipe(
-        map((res: any) => {
-          return this.getResult(res);
-        })
-      );
+    return new LogoffInputBatch(operation, machineName, badgeName, batchId, pos).execute(this.http);
   }
 
   interruptOperation(operation: string, machineName: string, yieldQty: number,

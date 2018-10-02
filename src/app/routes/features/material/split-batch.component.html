@@ -5,7 +5,7 @@
         <label class="weui-label">Batch Nr</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #batch (keydown.enter)='BatchEntered($event)' shareAutoFocus name="batch" id="batch"
+        <input class="weui-input" #batch (keydown.enter)='batchEntered($event)' shareAutoFocus name="batch" id="batch"
           [(ngModel)]='inputData.barCode' shareKeyHandler [keyHandler]='{nextInputId: "numberOfSplits",inputing: inputing, req: request(requestBatchData, requestBatchDataSuccess, requestBatchDataFailed)}'
           placeholder="Pls input Batch Nr" weui-required required>
       </div>
@@ -20,7 +20,7 @@
         <label class="weui-label">Nr. of Splits</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" weui-input='number' [shareMin]="1" #numberOfSplits (keydown.enter)='NumberOfSplitsEntered($event)'
+        <input class="weui-input" weui-input='number' [shareMin]="1" #numberOfSplits (keydown.enter)='numberOfSplitsEntered($event)'
           shareKeyHandler [keyHandler]='{nextInputId: "splittedQty",inputing: inputing, req: request(requestNumberOfSplitsData, requestNumberOfSplitsDataSuccess, requestNumberOfSplitsDataFailed)}'
           name="numberOfSplits" id="numberOfSplits" [(ngModel)]='inputData.numberOfSplits' placeholder="Pls input Nr. of Splits"
           weui-required required>
@@ -31,7 +31,7 @@
         <label class="weui-label">Child Qty</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" weui-input='number' [shareMin]="1" #splittedQty (keydown.enter)='SplittedQtyEntered($event)'
+        <input class="weui-input" weui-input='number' [shareMin]="1" #splittedQty (keydown.enter)='splittedQtyEntered($event)'
           shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestSplittedQtyData, requestSplittedQtyDataSuccess, requestSplittedQtyDataFailed)}'
           name="splittedQty" id="splittedQty" [(ngModel)]='inputData.splittedQty' placeholder="Pls input split qty"
           weui-required required>
@@ -47,7 +47,7 @@
         <label class="weui-label">Operator</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" id="operator"
+        <input class="weui-input" #operator (keydown.enter)='operatorEntered($event)' name="operator" id="operator"
           [(ngModel)]='inputData.badge' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
           placeholder="Pls input Operator" weui-required required>
       </div>

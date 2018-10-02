@@ -1,15 +1,64 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError, of } from 'rxjs';
-import { map, concatMap } from 'rxjs/operators';
+import { map, concatMap, combineLatest } from 'rxjs/operators';
 import { WEBAPI_HOST } from '@core/constants';
-import { MachineInfo, ReasonInfo, OperatorInfo, BatchInfo, MaterialBufferInfo } from '@core/interface/common.interface';
+import { MachineInfo, ReasonInfo, OperatorInfo, BatchInfo, MaterialBufferInfo, ComponentInfo } from '@core/interface/common.interface';
 
 @Injectable()
 export class NewFetchService {
   url = 'fetch';
 
   constructor(protected http: HttpClient) { }
+
+  getComponentOfOperation(operation: string, machine: string): Observable<ComponentInfo[]> {
+    const result: ComponentInfo[] = [];
+
+    const compSql =
+      `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS MATERIAL, SOLL_MENGE AS USAGE, SOLL_EINH AS UNIT, POS FROM MLST_HY ` +
+      ` WHERE AUFTRAG_NR ='${operation}' ORDER BY POS`;
+
+    const loadCompSql =
+      `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY3 AS BATCHID, ` +
+      `LOS_BESTAND.LOSNR AS BATCH, SUBKEY5 AS POS, MENGE AS QTY, ` +
+      `RESTMENGE AS REMAINQTY, LOS_BESTAND.ARTIKEL AS MATERIAL FROM HYBUCH, LOS_BESTAND ` +
+      `WHERE KEY_TYPE = 'C' AND TYP = 'E' AND SUBKEY1 = '${machine}' AND SUBKEY3 = LOSNR`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${compSql}`).pipe(
+      combineLatest(
+        this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${loadCompSql}`),
+        (comp, loaded) => {
+          if (comp !== null) {
+            (<Array<any>>comp).forEach(c => {
+              result.push({
+                operatoin: c.OPERATION,
+                position: c.POS,
+                usage: c.USAGE,
+                unit: c.UNIT,
+                material: c.MATERIAL,
+                inputBatch: '',
+                inputBatchQty: 0
+              });
+            });
+          }
+
+          if (loaded !== null) {
+            (<Array<any>>loaded).forEach(c => {
+              const find = result.find(item => item.material === c.MATERIAL);
+              if (find) {
+                find.inputBatch = c.BATCH;
+                find.inputBatchQty = c.REMAINQTY;
+              }
+            });
+          }
+
+          return result.sort((a, b) => {
+            return (a.inputBatch > b.inputBatch) ? 1 : -1;
+          });
+        }
+      )
+    );
+  }
 
   getMachineWithOperation(machineName: string): Observable<MachineInfo> {
     const machineInfo: MachineInfo = new MachineInfo();
@@ -63,6 +112,19 @@ export class NewFetchService {
         } else {
           return throwError(`Reason ${reason} not exist！`);
         }
+      }));
+  }
+
+  getBatchMaterial(search: string): Observable<string[]> {
+    const materialSql =
+      `SELECT DISTINCT(ARTIKEL) AS MATERIAL FROM LOS_BESTAND WHERE ARTIKEL LIKE '${search + '%25'}' ORDER BY ARTIKEL`;
+    // `SELECT DISTINCT(ARTIKEL) AS MATERIAL FROM LOS_BESTAND WHERE ARTIKEL LIKE '${search}' ORDER BY ARTIKEL`;
+
+    const ret = [];
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${materialSql}`).pipe(
+      concatMap((res: any) => {
+        return of(res.map(row => row.MATERIAL));
       }));
   }
 
