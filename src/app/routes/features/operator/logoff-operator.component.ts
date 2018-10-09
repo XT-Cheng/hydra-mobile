@@ -3,28 +3,28 @@ import { BapiService } from '@core/hydra/bapi/bapi.service';
 import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService } from 'ngx-weui';
-import { switchMap, map } from 'rxjs/operators';
-import { of } from 'rxjs';
-import { OperatorInfo, MachineInfo, ComponentInfo } from '@core/interface/common.interface';
+import { switchMap, map, tap, concatMap } from 'rxjs/operators';
+import { throwError, of } from 'rxjs';
+import { BatchInfo, OperatorInfo, MachineInfo, ComponentInfo } from '@core/interface/common.interface';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { BaseForm } from '../base.form';
 
-interface InputData {
+interface IInputData {
   machineName: string;
   badge: string;
 }
 
-class InputData implements InputData {
+class InputData implements IInputData {
   machineName = '';
-  batchName = '';
+  badge = '';
 }
 
 @Component({
-  selector: 'operation-logon',
-  templateUrl: 'logon-operation.component.html',
-  styleUrls: ['./logon-operation.component.scss']
+  selector: 'operator-logoff',
+  templateUrl: 'logoff-operator.component.html',
+  styleUrls: ['./logoff-operator.component.scss']
 })
-export class LogonOperationComponent extends BaseForm {
+export class LogoffOperatorComponent extends BaseForm {
   //#region View Children
 
   @ViewChild('machine') machineElem: ElementRef;
@@ -36,11 +36,11 @@ export class LogonOperationComponent extends BaseForm {
 
   protected operatorInfo: OperatorInfo = new OperatorInfo();
   protected machineInfo: MachineInfo = new MachineInfo();
-  protected componenstList: ComponentInfo[] = [];
+  protected operatorList: OperatorInfo[] = [];
 
   protected inputData: InputData = new InputData();
 
-  protected title = `Operation Logon`;
+  protected title = `Operator Logoff`;
 
   //#endregion
 
@@ -54,7 +54,7 @@ export class LogonOperationComponent extends BaseForm {
     _toastService: ToastService,
     _tipService: ToptipsService
   ) {
-    super(_toastService, _routeService, _tipService, _titleService);
+    super(_toastService, _routeService, _tipService, _titleService, false);
   }
 
   //#endregion
@@ -63,9 +63,7 @@ export class LogonOperationComponent extends BaseForm {
 
   //#region Machine Reqeust
 
-  requestMachineDataSuccess = (ret) => {
-    this.machineInfo = ret.machine;
-    this.componenstList = ret.components;
+  requestMachineDataSuccess = (_) => {
   }
 
   requestMachineDataFailed = () => {
@@ -75,16 +73,16 @@ export class LogonOperationComponent extends BaseForm {
 
   requestMachineData = () => {
     if (this.inputData.machineName === this.machineInfo.machine) {
-      return of({ machine: this.machineInfo, components: this.componenstList });
+      return of(null);
     }
 
     return this._fetchService.getMachineWithOperation(this.inputData.machineName).pipe(
       switchMap((machineInfo) => {
         this.machineInfo = machineInfo;
-        return this._fetchService.getComponentOfOperation(this.machineInfo.nextOperation, this.machineInfo.machine);
+        return this._fetchService.getOperatorsLoggedOn(this.machineInfo.machine);
       }),
-      map(componentList => {
-        return { machine: this.machineInfo, components: componentList };
+      map(operatorList => {
+        this.operatorList = operatorList;
       })
     );
   }
@@ -93,8 +91,7 @@ export class LogonOperationComponent extends BaseForm {
 
   //#region Operator Reqeust
 
-  requestOperatorDataSuccess = (operatorInfo) => {
-    this.operatorInfo = operatorInfo;
+  requestOperatorDataSuccess = () => {
   }
 
   requestOperatorDataFailed = () => {
@@ -112,8 +109,22 @@ export class LogonOperationComponent extends BaseForm {
       return of(this.operatorInfo);
     }
 
-    return this._fetchService.getOperatorByBadge(this.inputData.badge);
+    return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
+      tap(operatorInfo => {
+        if (!this.operatorList.some(o => o.badge === operatorInfo.badge)) {
+          throw Error(`Operator ${operatorInfo.badge} not logged on yet!`);
+        }
+      }),
+      map(operatorInfo => {
+        this.operatorInfo = operatorInfo;
+        this.operatorInfo['isRemove'] = true;
+        const index = this.operatorList.findIndex(o => o.badge === operatorInfo.badge);
+        this.operatorList.splice(index, 1, this.operatorInfo);
+        this.operatorList = this.operatorList.sort((a, b) => a['isRemove']);
+      })
+    );
   }
+  //#endregion
 
   //#endregion
 
@@ -145,19 +156,33 @@ export class LogonOperationComponent extends BaseForm {
 
   //#region Exeuction
 
-  logonOperationSuccess = () => {
-    this._tipService['primary'](`Operation ${this.machineInfo.nextOperation} Logged On!`);
+  logoffOperatorSuccess = () => {
+    this._tipService['primary'](`Operators Logged Off!`);
+    const index = this.operatorList.findIndex(o => o.badge === this.operatorInfo.badge);
+    this.operatorList.splice(index, 1);
+    this.inputData.badge = '';
+    this.operatorElem.nativeElement.focus();
+  }
 
+  logoffOperatorFailed = () => {
+    this.resetForm();
     this.machineElem.nativeElement.focus();
   }
 
-  logonOperationFailed = () => {
-    this.machineElem.nativeElement.focus();
-  }
+  logoffOperator = () => {
+    // Logon Operator
+    let obs = of(null);
+    this.operatorList.forEach(op => {
+      if (op['isRemove']) {
+        obs = obs.pipe(
+          concatMap(_ => {
+            return this._bapiService.logoffUser(this.machineInfo.machine, op.badge);
+          })
+        );
+      }
+    });
 
-  logonOperation = () => {
-    return this._bapiService.logonOperation(this.machineInfo.nextOperation, this.machineInfo.machine,
-      this.inputData.badge);
+    return obs;
   }
 
   //#endregion
@@ -169,24 +194,27 @@ export class LogonOperationComponent extends BaseForm {
     this.machineInfo = new MachineInfo();
     this.operatorInfo = new OperatorInfo();
 
-    this.componenstList = [];
+    this.operatorList = [];
 
     this.machineElem.nativeElement.focus();
   }
 
   isValid() {
-    return this.machineInfo.machine
-      && this.operatorInfo.badge && !this.componenstList.some(c => !c.inputBatch);
+    // return true;
+    return this.machineInfo.currentOperation && this.machineInfo.machine
+      && this.hasOpeatorToLogoff();
   }
 
   //#endregion
 
   //#region Support methods
+  hasOpeatorToLogoff() {
+    return this.operatorList.some(c => c['isRemove']);
+  }
 
-  getResultClass(comp) {
+  getStyle(op) {
     return {
-      'weui-icon-success': !!comp.inputBatch,
-      'weui-icon-warn': !comp.inputBatch
+      'background-color': !!op['isRemove'] ? 'pink' : 'white'
     };
   }
 

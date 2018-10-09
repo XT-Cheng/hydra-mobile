@@ -1,4 +1,4 @@
-//#region Machine Info
+//#region Machine info
 
 export interface MachineInfo {
   machine: string;
@@ -7,6 +7,7 @@ export interface MachineInfo {
   currentMotherOperation: string;
   nextOperation: string;
   nextMotherOperation: string;
+  currentOutputBatch: string;
   currentOperationDescription(): string;
   currentMotherOperationDescription(): string;
   nextOperationDescription(): string;
@@ -19,6 +20,7 @@ export interface MachineInfo {
 export class MachineInfo implements MachineInfo {
   machine = '';
   description = '';
+  currentOutputBatch = '';
   currentOperation = '';
   currentMotherOperation = '';
   nextOperation = '';
@@ -42,6 +44,24 @@ export class MachineInfo implements MachineInfo {
   nextOPDisplay(): string {
     return `${this.nextOperationDescription()}, ${this.nextMotherOperationDescription()}`;
   }
+}
+
+//#endregion
+
+//#region Material Master info
+
+export interface IMaterialMaster {
+  name: string;
+  description: string;
+  cartonQty: number;
+  palleteQty: number;
+}
+
+export class MaterialMaster implements IMaterialMaster {
+  name = '';
+  description = '';
+  cartonQty = 0;
+  palleteQty = 0;
 }
 
 //#endregion
@@ -113,6 +133,7 @@ export interface BatchInfo {
   materialType: string;
   status: string;
   currentLocation: string;
+  [name: string]: any;
   display(): string;
 }
 
@@ -135,6 +156,57 @@ export class BatchInfo implements BatchInfo {
 }
 //#endregion
 
+//#region Tool Info
+export interface IToolInfo {
+  operation: string;
+  usage: number;
+  requiredTool: string;
+  inputTool: string;
+  display(): string;
+}
+
+export class ToolInfo implements IToolInfo {
+  operation = '';
+  usage = -1;
+  requiredTool = '';
+  inputTool = '';
+  display(): string {
+    if (this.inputTool) {
+      return `Tool:${this.inputTool}`;
+    }
+    return ``;
+  }
+}
+
+//#endregion
+
+//#region Resource info
+
+export interface IResourceInfo {
+  toolId: string;
+  tool: string;
+  status: string;
+  statusDescription: string;
+  belongsTo: string;
+  display(): string;
+}
+
+export class ResourceInfo implements IResourceInfo {
+  toolId: '';
+  tool = '';
+  status = '';
+  statusDescription = '';
+  belongsTo = '';
+  display(): string {
+    if (this.tool) {
+      return `Tool:${this.tool}, Status: ${this.statusDescription}`;
+    }
+    return ``;
+  }
+}
+
+//#endregion
+
 //#region Component Info
 
 export interface ComponentInfo {
@@ -145,6 +217,7 @@ export interface ComponentInfo {
   material: string;
   inputBatch: string;
   inputBatchQty: number;
+  display(): string;
 }
 
 export class ComponentInfo implements ComponentInfo {
@@ -155,6 +228,34 @@ export class ComponentInfo implements ComponentInfo {
   material = '';
   inputBatch = '';
   inputBatchQty = 0;
+  display(): string {
+    if (this.inputBatch) {
+      return `Batch:${this.inputBatch},Qty:${this.inputBatchQty}`;
+    }
+    return ``;
+  }
+}
+
+//#endregion
+
+//#region Operation Info
+
+export interface IOperation {
+  workOrder: string;
+  operation: string;
+  material: string;
+  targetQty: number;
+  operationName(): string;
+}
+
+export class OperationInfo {
+  workOrder = '';
+  operation = '';
+  material = '';
+  targetQty = 0;
+  operationName(): string {
+    return `${this.workOrder}${this.operation}`;
+  }
 }
 
 //#endregion

@@ -99,7 +99,7 @@ export abstract class BaseForm {
     handler().pipe(
       tap((ret: IBapiResult) => {
         if (!ret.isSuccess) {
-          throwError(ret.description);
+          throw Error(ret.description);
         }
       }
       )).subscribe((ret) => {
@@ -110,7 +110,7 @@ export abstract class BaseForm {
         }
       }, (err) => {
         failed(err);
-        this.end();
+        this.end(err);
       });
   }
 

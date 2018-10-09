@@ -5,46 +5,46 @@ import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService } from 'ngx-weui';
 import { switchMap, map, tap } from 'rxjs/operators';
 import { throwError, of } from 'rxjs';
-import { BatchInfo, OperatorInfo, MachineInfo, ComponentInfo } from '@core/interface/common.interface';
+import { BatchInfo, OperatorInfo, MachineInfo, ComponentInfo, ToolInfo, ResourceInfo } from '@core/interface/common.interface';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { BaseForm } from '../base.form';
 
 interface InputData {
   machineName: string;
-  barCode: string;
+  tool: string;
   badge: string;
 }
 
 class InputData implements InputData {
   machineName = '';
-  barCode = '';
+  tool = '';
   badge = '';
 }
 
 @Component({
-  selector: 'batch-logon',
-  templateUrl: 'logon-batch.component.html',
-  styleUrls: ['./logon-batch.component.scss']
+  selector: 'tool-logon',
+  templateUrl: 'logon-tool.component.html',
+  styleUrls: ['./logon-tool.component.scss']
 })
-export class LogonBatchComponent extends BaseForm {
+export class LogonToolComponent extends BaseForm {
   //#region View Children
 
   @ViewChild('machine') machineElem: ElementRef;
-  @ViewChild('batch') batchElem: ElementRef;
+  @ViewChild('tool') toolElem: ElementRef;
   @ViewChild('operator') operatorElem: ElementRef;
 
   //#endregion
 
   //#region Protected member
 
-  protected batchInfo: BatchInfo = new BatchInfo();
+  protected toolInfo: ResourceInfo = new ResourceInfo();
   protected operatorInfo: OperatorInfo = new OperatorInfo();
   protected machineInfo: MachineInfo = new MachineInfo();
-  protected componenstList: ComponentInfo[] = [];
+  protected toolList: ToolInfo[] = [];
 
   protected inputData: InputData = new InputData();
 
-  protected title = `Batch Logon`;
+  protected title = `Tool Logon`;
 
   //#endregion
 
@@ -83,10 +83,10 @@ export class LogonBatchComponent extends BaseForm {
     return this._fetchService.getMachineWithOperation(this.inputData.machineName).pipe(
       switchMap((machineInfo) => {
         this.machineInfo = machineInfo;
-        return this._fetchService.getComponentOfOperation(this.machineInfo.nextOperation, this.machineInfo.machine);
+        return this._fetchService.getToolOfOperation(this.machineInfo.nextOperation, this.machineInfo.machine);
       }),
-      map(componentList => {
-        this.componenstList = componentList;
+      map(toolList => {
+        this.toolList = toolList;
       })
     );
   }
@@ -95,38 +95,33 @@ export class LogonBatchComponent extends BaseForm {
 
   //#region Batch Request
 
-  requestBatchDataSuccess = (_) => {
+  requestToolDataSuccess = (_) => {
   }
 
-  requestBatchDataFailed = () => {
-    this.inputData.barCode = '';
-    this.batchInfo = new BatchInfo();
-    this.batchElem.nativeElement.focus();
+  requestToolDataFailed = () => {
+    this.inputData.tool = '';
+    this.toolInfo = new ResourceInfo();
+    this.toolElem.nativeElement.focus();
   }
 
-  requestBatchData = () => {
-    if (!this.inputData.barCode) {
+  requestToolData = () => {
+    if (!this.inputData.tool) {
       return of(null);
     }
 
-    if (this.inputData.barCode === this.batchInfo.barCode) {
+    if (this.inputData.tool === this.toolInfo.tool) {
       return of(null);
     }
 
-    return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
-      switchMap((batchInfo: BatchInfo) => {
-        return this._fetchService.getBatchInformation(batchInfo.batchName, this.inputData.barCode);
-      }),
-      map(batchInfo => {
-        this.batchInfo = batchInfo;
-        const found = this.componenstList.some(c => {
-          return c.material === batchInfo.material && !c.inputBatch;
+    return this._fetchService.getResourceInformation(this.inputData.tool).pipe(
+      map(toolInfo => {
+        this.toolInfo = toolInfo;
+        const found = this.toolList.some(c => {
+          return this.toolInfo.belongsTo === c.requiredTool;
         });
         if (!found) {
-          return throwError(`Batch ${this.batchInfo.batchName} not allowed!`);
+          return throwError(`Tool ${this.toolInfo.tool} not allowed!`);
         }
-
-        this.inputData.barCode = this.batchInfo.batchName;
       }));
   }
 
@@ -172,14 +167,14 @@ export class LogonBatchComponent extends BaseForm {
       return;
     }
 
-    this.batchElem.nativeElement.focus();
+    this.toolElem.nativeElement.focus();
   }
 
-  batchEntered(event) {
+  toolEntered(event) {
     this.stopEvent(event);
 
-    if (this.form.controls['batch'].invalid) {
-      this.batchElem.nativeElement.select();
+    if (this.form.controls['tool'].invalid) {
+      this.toolElem.nativeElement.select();
       return;
     }
 
@@ -201,26 +196,27 @@ export class LogonBatchComponent extends BaseForm {
 
   //#region Exeuction
 
-  logonBatchSuccess = () => {
-    this._tipService['primary'](`Batch ${this.batchInfo.batchName} Logged On!`);
-    this.inputData.barCode = '';
-    this.batchElem.nativeElement.focus();
+  logonToolSuccess = () => {
+    this._tipService['primary'](`Tool ${this.toolInfo.tool} Logged On!`);
+    this.inputData.tool = '';
+    this.toolInfo = new ResourceInfo();
+    this.toolElem.nativeElement.focus();
   }
 
-  logonBatchFailed = () => {
+  logonToolFailed = () => {
     this.machineElem.nativeElement.focus();
   }
 
-  logonBatch = () => {
-    // Logon Batch
-    const comp = this.componenstList.find(c => c.material === this.batchInfo.material && !c.inputBatch);
+  logonTool = () => {
+    // Logon Tool
+    const tool = this.toolList.find(c => this.toolInfo.belongsTo === c.requiredTool && !c.inputTool);
 
-    return this._bapiService.logonBatch(this.machineInfo.nextOperation, this.machineInfo.machine,
-      this.operatorInfo.badge, this.batchInfo.batchName, this.batchInfo.material, comp.position).pipe(
+    return this._bapiService.logonTool(this.machineInfo.nextOperation, this.machineInfo.machine,
+      this.toolInfo.toolId, this.operatorInfo.badge).pipe(
         tap(_ => {
-          this.componenstList = this.componenstList.map(c => {
-            if (c.material === comp.material && c.position === comp.position) {
-              return Object.assign(c, { inputBatch: this.batchInfo.batchName, inputBatchQty: this.batchInfo.qty });
+          this.toolList = this.toolList.map(c => {
+            if (c.requiredTool === tool.requiredTool) {
+              return Object.assign(c, { inputTool: this.toolInfo.tool });
             }
             return c;
           });
@@ -236,15 +232,15 @@ export class LogonBatchComponent extends BaseForm {
     this.form.reset();
     this.machineInfo = new MachineInfo();
     this.operatorInfo = new OperatorInfo();
-    this.batchInfo = new BatchInfo();
+    this.toolInfo = new ResourceInfo();
 
-    this.componenstList = [];
+    this.toolList = [];
 
     this.machineElem.nativeElement.focus();
   }
 
   isValid() {
-    return this.batchInfo.batchName && this.machineInfo.machine
+    return this.toolInfo.tool && this.machineInfo.machine
       && this.operatorInfo.badge;
   }
 
@@ -252,10 +248,10 @@ export class LogonBatchComponent extends BaseForm {
 
   //#region Support methods
 
-  getResultClass(comp) {
+  getResultClass(tool) {
     return {
-      'weui-icon-success': !!comp.inputBatch,
-      'weui-icon-warn': !comp.inputBatch
+      'weui-icon-success': !!tool.inputTool,
+      'weui-icon-warn': !tool.inputTool
     };
   }
 

@@ -1,14 +1,16 @@
 <weui-sidebar-container>
-    <weui-sidebar [(status)]="_status">
-      <div class="weui-article">
-          <weui-button (click)="gotoOperation()">工单</weui-button>
-          <weui-button (click)="gotoMachine()">设备</weui-button>
-          <weui-button (click)="gotoMaterial()">物料</weui-button>
-      </div>
-    </weui-sidebar>
-    <layout-header (menuClicked)='toggleOpened()'></layout-header>
-    <section class="content">
-      <router-outlet></router-outlet>
-    </section>
-    <layout-footer></layout-footer>
+  <weui-sidebar [(status)]="_status">
+    <div class="weui-article">
+      <weui-button (click)="gotoOperation()">工单</weui-button>
+      <weui-button (click)="gotoMachine()">设备</weui-button>
+      <weui-button (click)="gotoMaterial()">物料</weui-button>
+      <weui-button (click)="gotoOperator()">人员</weui-button>
+      <weui-button (click)="gotoTool()">工夹具</weui-button>
+    </div>
+  </weui-sidebar>
+  <layout-header (menuClicked)='toggleOpened()'></layout-header>
+  <section class="content">
+    <router-outlet></router-outlet>
+  </section>
+  <layout-footer></layout-footer>
 </weui-sidebar-container>

@@ -119,26 +119,26 @@ export class GenerateOutputFGBatchComponent {
     }
 
     generateOutputBatch() {
-        this._toastService['loading']();
+        // this._toastService['loading']();
 
-        this._fetchService.getActiveOutputBatch(this.machineInfo.currentOperation, this.machineInfo.machine).pipe(
-            switchMap(res => {
-                if (res === null || res.length === 0) {
-                    this._tipService['warn'](`没有可用的批次！`);
-                    throw Error(`没有可用的批次！`);
-                }
+        // this._fetchService.getActiveOutputBatch(this.machineInfo.currentOperation, this.machineInfo.machine).pipe(
+        //     switchMap(res => {
+        //         if (res === null || res.length === 0) {
+        //             this._tipService['warn'](`没有可用的批次！`);
+        //             throw Error(`没有可用的批次！`);
+        //         }
 
-                return this._bapiService.generateOutputSemiBatch(this.machineInfo.currentOperation, this.machineInfo.machine,
-                    res[0].ACTIVEBATCHID, this.outputBatch.batchName, this.outputBatch.operator, this.outputBatch.batchQty);
-            })
-        ).subscribe(ret => {
-            this._tipService['primary'](`批次${this.outputBatch.batchName}生成成功！`);
-            this._toastService.hide();
-            this.resetForm();
-        }, err => {
-            this._tipService['warn'](err);
-            this._toastService.hide();
-            this.resetForm();
-        });
+        //         return this._bapiService.generateOutputSemiBatch(this.machineInfo.currentOperation, this.machineInfo.machine,
+        //             res[0].ACTIVEBATCHID, this.outputBatch.batchName, this.outputBatch.operator, this.outputBatch.batchQty);
+        //     })
+        // ).subscribe(ret => {
+        //     this._tipService['primary'](`批次${this.outputBatch.batchName}生成成功！`);
+        //     this._toastService.hide();
+        //     this.resetForm();
+        // }, err => {
+        //     this._tipService['warn'](err);
+        //     this._toastService.hide();
+        //     this.resetForm();
+        // });
     }
 }

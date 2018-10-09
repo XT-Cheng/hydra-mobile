@@ -1,47 +1,58 @@
 <form #f="ngForm">
-    <div class="weui-cells weui-cells_form">
-      <div class="weui-cell">
-        <div class="weui-cell__hd">
-          <label class="weui-label">设备</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" #machine shareAutoFocus name="machine" (keydown.enter)='MachineEntered($event)' [(ngModel)]='machineInfo.machine'
-            placeholder="请输入设备" weui-required>
-        </div>
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Machine</label>
       </div>
-      <label for="weuiAgree" class="weui-agree">
-        <span class="weui-agree__text">
-          {{machineInfo.description}}
-        </span>
-      </label>
-      <div class="weui-cell">
-        <div class="weui-cell__hd">
-          <label class="weui-label">半成品标签</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" #batchName (keydown.enter)='BatchNameEntered($event)' name="batchName" [(ngModel)]='outputBatch.batchName'
-            placeholder="请输入半成品标签" weui-required required>
-        </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #machine shareAutoFocus required name="machine" (keydown.enter)='machineEntered($event)'
+          [(ngModel)]='inputData.machineName' shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestMachineData, requestMachineDataSuccess, requestMachineDataFailed)}'
+          placeholder="Pls input Machine" weui-required>
       </div>
-      <div class="weui-cell">
-        <div class="weui-cell__hd">
-          <label class="weui-label">半成品数量</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" #batchQty (keydown.enter)='QuantityEntered($event)' name="batchQty" [(ngModel)]='outputBatch.batchQty'
-            placeholder="请输入半成品数量" weui-required='warn' weui-input='number' required>
-        </div>
-      </div>
-      <div class="weui-cell">
-        <div class="weui-cell__hd">
-          <label class="weui-label">操作人员</label>
-        </div>
-        <div class="weui-cell__bd">
-          <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='outputBatch.operator'
-            placeholder="请输入操作人员" weui-required required>
-        </div>
-      </div>
-      <button weui-button [disabled]='isDisable()' (click)='generateOutputBatch()'>生成批次</button>
     </div>
-  </form>
-  
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{machineInfo.currentOPDisplay()}}
+      </span>
+    </label>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Output Batch</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #batch (keydown.enter)='batchEntered($event)' name="batch" id="batch" [(ngModel)]='inputData.outputBatchName'
+          shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestBatchData, requestBatchDataSuccess, requestBatchDataFailed)}'
+          placeholder="Pls input Batch" weui-required>
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Batch Qty</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #batchQty [shareMin]='1' (keydown.enter)='quantityEntered($event)' name="batchQty" id="batchQty"
+          [(ngModel)]='inputData.outputBatchQty' shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing}'
+          placeholder="Pls input Batch Qty" weui-required required>
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Operator</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #operator (keydown.enter)='operatorEntered($event)' name="operator" id="operator"
+          [(ngModel)]='inputData.badge' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
+          placeholder="Pls input Operator" weui-required required>
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{operatorInfo.display()}}
+      </span>
+    </label>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(generateOutputBatch, generateOutputBatchSuccess, generateOutputBatchFailed)'>Gen.
+      Batch</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
+  </div>
+</form>
+<weui-mask #mask [backdrop]="false"></weui-mask>

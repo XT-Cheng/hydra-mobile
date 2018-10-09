@@ -26,6 +26,13 @@ import { PartialConfirmOperationComponent } from './features/operation/partialCo
 import { AdjustBatchQuantityComponent } from './features/material/adjust-batch-quantity.component';
 import { LogonBatchComponent } from './features/material/logon-batch.component';
 import { LogoffBatchComponent } from './features/material/logoff-batch.component';
+import { ReplenishBatchComponent } from './features/material/replenish-batch.component';
+import { LogonOperatorComponent } from './features/operator/logon-operator.component';
+import { OperatorListComponent } from './features/operator/operatorList.component';
+import { LogoffOperatorComponent } from './features/operator/logoff-operator.component';
+import { ToolListComponent } from './features/tool/toolList.component';
+import { LogonToolComponent } from './features/tool/logon-tool.component';
+import { LogoffToolComponent } from './features/tool/logoff-tool.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
@@ -41,6 +48,18 @@ const OPERATION_COMPONENTS = [
   PackingComponent
 ];
 
+const OPERAOR_COMPONENTS = [
+  OperatorListComponent,
+  LogonOperatorComponent,
+  LogoffOperatorComponent
+];
+
+const TOOL_COMPONENTS = [
+  ToolListComponent,
+  LogonToolComponent,
+  LogoffToolComponent
+];
+
 const MACHINE_COMPONENTS = [
   MachineListComponent
 ];
@@ -52,7 +71,8 @@ const MATERIAL_COMPONENTS = [
   SplitBatchComponent,
   AdjustBatchQuantityComponent,
   LogonBatchComponent,
-  LogoffBatchComponent
+  LogoffBatchComponent,
+  ReplenishBatchComponent
 ];
 
 const AUTH_COMPONENTS = [
@@ -74,6 +94,8 @@ const COMPONENTS_NOROUTE = [];
     ...MACHINE_COMPONENTS,
     ...MATERIAL_COMPONENTS,
     ...AUTH_COMPONENTS,
+    ...OPERAOR_COMPONENTS,
+    ...TOOL_COMPONENTS,
     ...COMPONENTS_NOROUTE
   ],
   entryComponents: COMPONENTS_NOROUTE

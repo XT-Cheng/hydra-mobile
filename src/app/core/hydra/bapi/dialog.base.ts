@@ -70,7 +70,7 @@ export abstract class DialogBase {
       }),
       tap((ret: IBapiResult) => {
         if (!ret.isSuccess) {
-          throwError(ret.description);
+          throw Error(ret.description);
         }
       }));
   }

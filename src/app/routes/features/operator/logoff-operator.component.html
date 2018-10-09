@@ -1,0 +1,42 @@
+<form #f="ngForm">
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Machine</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #machine shareAutoFocus required name="machine" id="machine" (keydown.enter)='machineEntered($event)'
+          shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestMachineData, requestMachineDataSuccess, requestMachineDataFailed)}'
+          [(ngModel)]='inputData.machineName' placeholder="Pls input Machine" weui-required>
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{machineInfo.currentOPDisplay()}}
+      </span>
+    </label>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Operator</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #operator (keydown.enter)='operatorEntered($event)' id="operator" name="operator"
+          [(ngModel)]='inputData.badge' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
+          placeholder="Pls input Operator">
+      </div>
+    </div>
+    <div class="weui-cells__title">Operator List</div>
+    <div class="weui-cells" style='overflow-y: scroll;height: 100px;'>
+      <div *ngFor='let op of operatorList' [ngStyle]='getStyle(op)' class="weui-cell weui-cell_access">
+        <div class="weui-cell__bd">
+          <p>{{op.badge}}</p>
+        </div>
+        <div class="weui-cell__ft">{{op.display()}}</div>
+      </div>
+    </div>
+    <button class='weui-flex__item' weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logoffOperator, logoffOperatorSuccess, logoffOperatorFailed)'>LogOff
+      Operator</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
+  </div>
+</form>
+<weui-mask #mask [backdrop]="false"></weui-mask>

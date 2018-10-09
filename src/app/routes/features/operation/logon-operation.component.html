@@ -5,74 +5,53 @@
         <label class="weui-label">Machine</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #machine shareAutoFocus name="machine" (keydown.enter)='MachineEntered($event)'
-          [(ngModel)]='machineInfo.machine' placeholder="Pls input Machine" weui-required>
+        <input class="weui-input" #machine required shareAutoFocus name="machine" id="machine" (keydown.enter)='machineEntered($event)'
+          shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestMachineData, requestMachineDataSuccess, requestMachineDataFailed)}'
+          [(ngModel)]='inputData.machineName' placeholder="Pls input Machine" weui-required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{machineInfo.nextOPDescription}}
+        {{machineInfo.nextOPDisplay()}}
       </span>
     </label>
-    <weui-navbar>
-      <weui-tab heading="Mat. Logon">
-        <div class="weui-cells">
-          <div class="weui-cell">
-            <div class="weui-cell__hd">
-              <label class="weui-label">Batch</label>
-            </div>
-            <div class="weui-cell__bd">
-              <input class="weui-input" #batch name="batch" (keydown.enter)='BatchEntered($event)' [(ngModel)]='loadBatch.batchName'
-                placeholder="Pls input Batch">
-            </div>
-          </div>
-          <label for="weuiAgree" class="weui-agree">
-            <span class="weui-agree__text">
-              {{toBeLoadedBatch.description}}
-            </span>
-          </label>
-        </div>
-      </weui-tab>
-      <weui-tab heading="Tool Logon">
-        <div class="weui-cells">
-          <div class="weui-cell">
-            <div class="weui-cell__hd">
-              <label class="weui-label">Tool</label>
-            </div>
-            <div class="weui-cell__bd">
-              <input class="weui-input" #tool name="tool" (keydown.enter)='ToolEntered($event)' [(ngModel)]='loadTool.toolName'
-                placeholder="Pls input Tool">
-            </div>
-          </div>
-        </div>
-      </weui-tab>
-    </weui-navbar>
     <div class="weui-cell">
       <div class="weui-cell__hd">
         <label class="weui-label">Operator</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #operator (keydown.enter)='OperatorEntered($event)' name="operator" [(ngModel)]='loadBatch.operator'
+        <input class="weui-input" #operator (keydown.enter)='operatorEntered($event)' name="operator" id="operator"
+          [(ngModel)]='inputData.badge' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
           placeholder="Pls input Operator" weui-required required>
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{operatorInfo}}
+        {{operatorInfo.display()}}
       </span>
     </label>
-    <div class="weui-cells__title">Mat. List</div>
-    <div class="weui-cells">
-      <div *ngFor='let comp of componentsInfo' class="weui-cell weui-cell_access" (click)='logoffBatch(comp)'>
-        <div class="weui-cell__hd">
-          <i style='display: block;' [ngClass]='getResultClass(comp)'></i>
+    <weui-navbar>
+      <weui-tab heading="Mat. Logon">
+        <div class="weui-cells__title">Mat. List</div>
+        <div class="weui-cells">
+          <div *ngFor='let comp of componenstList' class="weui-cell weui-cell_access">
+            <div class="weui-cell__hd">
+              <i style='display: block;' [ngClass]='getResultClass(comp)'></i>
+            </div>
+            <div class="weui-cell__bd">
+              <p>{{comp.material + '.' + comp.position}}</p>
+            </div>
+            <div class="weui-cell__ft">{{comp.display()}}</div>
+          </div>
         </div>
-        <div class="weui-cell__bd">
-          <p>{{comp.MATERIAL}}</p>
-        </div>
-        <div class="weui-cell__ft">{{compDescription(comp)}}</div>
-      </div>
-    </div>
-    <button weui-button [disabled]='isDisable()' (click)='logonOP()'>Logon</button>
+      </weui-tab>
+      <weui-tab heading="Tool Logon">
+
+      </weui-tab>
+    </weui-navbar>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logonOperation, logonOperationSuccess, logonOperationFailed)'>Logon
+      Operation</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
+<weui-mask #mask [backdrop]="false"></weui-mask>

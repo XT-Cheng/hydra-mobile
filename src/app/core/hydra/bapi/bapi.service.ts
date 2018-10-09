@@ -20,7 +20,11 @@ import { GenerateBatchConnection } from '@core/hydra/bapi/generate.batchConnecti
 import { PartialConfirmOperation } from '@core/hydra/bapi/partialConfirm.operation';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { BatchInfo } from '@core/interface/common.interface';
-
+import { ChangeInputBatch } from '@core/hydra/bapi/change.inputBatch';
+import { LogonUser } from '@core/hydra/bapi/logon.user';
+import { LogoffUser } from '@core/hydra/bapi/logoff.user';
+import { LogonTool } from '@core/hydra/bapi/logon.tool';
+import { LogoffTool } from '@core/hydra/bapi/logoff.tool';
 
 @Injectable()
 export class BapiService {
@@ -32,6 +36,22 @@ export class BapiService {
   createBatch(batchName: string, materialNumber: string, batchQty: number,
     materialBuffer: string, badge: string): Observable<IBapiResult> {
     return new CreateBatch(batchName, materialNumber, batchQty, materialBuffer, badge).execute(this.http);
+  }
+
+  logonUser(machine: string, badge: string) {
+    return new LogonUser(machine, badge).execute(this.http);
+  }
+
+  logoffUser(machine: string, badge: string) {
+    return new LogoffUser(machine, badge).execute(this.http);
+  }
+
+  logonTool(operation: string, machine: string, toolId: string, badge: string) {
+    return new LogonTool(operation, machine, badge, toolId).execute(this.http);
+  }
+
+  logoffTool(operation: string, machine: string, toolId: string, badge: string) {
+    return new LogoffTool(operation, machine, badge, toolId).execute(this.http);
   }
 
   mergeBatch(box: string, toBeMerged: string[], badgeName: string) {
@@ -173,51 +193,28 @@ export class BapiService {
   }
 
   logonOperation(operation: string, machineName: string, badgeName: string) {
-    const gen = new GenerateBatchName('P');
-
-    let newBatchId;
     // Get new Batch as Output Batch
-    return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: gen.dialogString() }).pipe(
-      switchMap((res: any) => {
-        const array: Array<string> = res.content.split('|');
-        newBatchId = array.find((item: string) => item.search(`NR=`) > -1)
-          .replace('NR=', '').trimRight();
-        const data = new LogonOperation(operation, machineName, badgeName, newBatchId);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
+    let batchName;
+    return this._newFetchService.getNextBatchName().pipe(
+      switchMap((name) => {
+        batchName = name;
+        return new LogonOperation(operation, machineName, badgeName, batchName).execute(this.http);
       }),
       switchMap(() => {
         return this._fetchService.getOperation(operation);
       }),
       switchMap((ret) => {
         const materialDescription = ret.MATERIALDESCRIPTION;
-        const data = new UpdateBatch(newBatchId, badgeName, null, null, materialDescription);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
-      }),
-      map((res: any) => {
-        return this.getResult(res);
+        return new UpdateBatch(batchName, badgeName, null, null, materialDescription).execute(this.http);
       })
     );
   }
 
-  generateOutputSemiBatch(operation: string, machineName: string, currentBatchId: string, batchName: string,
-    badgeName: string, qty: number) {
-    const gen = new GenerateBatchName('P');
-
+  generateOutputSemiBatch(operation: string, machineName: string, badgeName: string, qty: number) {
     // Get new Batch as Output Batch
-    return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: gen.dialogString() }).pipe(
-      switchMap((res: any) => {
-        const array: Array<string> = res.content.split('|');
-        const newBatch = array.find((item: string) => item.search(`NR=`) > -1)
-          .replace('NR=', '').trimRight();
-        const data = new ChangeOutputBatch(operation, machineName, badgeName, newBatch, qty);
-        return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
-      }),
-      // switchMap(() => {
-      // const data = new UpdateBatch(currentBatchId, badgeName, batchName, null);
-      // return this.http.post(`${WEBAPI_HOST}/${this.url}`, { dialog: data.dialogString() });
-      // }),
-      map((res: any) => {
-        return this.getResult(res);
+    return this._newFetchService.getNextBatchName().pipe(
+      switchMap((name) => {
+        return new ChangeOutputBatch(operation, machineName, badgeName, name, qty).execute(this.http);
       })
     );
   }
@@ -243,6 +240,11 @@ export class BapiService {
         return this.getResult(res);
       })
     );
+  }
+
+  changeInputBatch(operation: string, machine: string, badge: string, originalBatch: string,
+    newBatch: string, poistion: number, material: string) {
+    return new ChangeInputBatch(operation, machine, badge, originalBatch, newBatch, poistion, material).execute(this.http);
   }
 
   private getResult(res: any) {

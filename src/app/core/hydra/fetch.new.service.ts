@@ -3,7 +3,10 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError, of } from 'rxjs';
 import { map, concatMap, combineLatest } from 'rxjs/operators';
 import { WEBAPI_HOST } from '@core/constants';
-import { MachineInfo, ReasonInfo, OperatorInfo, BatchInfo, MaterialBufferInfo, ComponentInfo } from '@core/interface/common.interface';
+import {
+  MachineInfo, ReasonInfo, OperatorInfo, BatchInfo, MaterialBufferInfo, ComponentInfo,
+  IMaterialMaster, MaterialMaster, OperationInfo, ToolInfo, ResourceInfo
+} from '@core/interface/common.interface';
 
 @Injectable()
 export class NewFetchService {
@@ -11,12 +14,99 @@ export class NewFetchService {
 
   constructor(protected http: HttpClient) { }
 
+  getOperatorsLoggedOn(machine: string): Observable<OperatorInfo[]> {
+    const sql = `SELECT PERSON_NAME AS FIRSTNAME, PERSON_VORNAME AS LASTNAME, KARTEN_NUMMER AS BADGE ` +
+      `FROM HYBUCH,PERSONALSTAMM ` +
+      `WHERE SUBKEY1 = '${machine}' AND KEY_TYPE = 'P' AND SUBKEY4 =  LPAD(PERSONALNUMMER, 8, '0')`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
+      map(res => {
+        const result: OperatorInfo[] = [];
+        (<Array<any>>res).forEach(c => {
+          result.push(Object.assign(new OperatorInfo(),
+            {
+              firstName: c.FIRSTNAME,
+              lastName: c.LASTNAME,
+              badge: c.BADGE
+            }));
+        });
+        return result;
+      }));
+  }
+
+  getResourceInformation(tool: string, toolType: string = 'WNR'): Observable<ResourceInfo> {
+    const result = new ResourceInfo();
+
+    const sql =
+      `SELECT RES.RES_ID AS TOOLID, RES.RES_NR AS TOOLNAME, RES_STATUS.STATUS AS STATUS, ` +
+      `RES_STATUS_ASSIGN.STATUSTEXT AS STATUSDESCRIPTION, ` +
+      `RES_REQUIRED.RES_NR_M AS REQUIREDRESOURCE FROM RES_BESTAND RES, ` +
+      `RES_STATUS RES_STATUS, RES_STATUS_ZUORD RES_STATUS_ASSIGN,RES_BEDARFSZUORD RES_REQUIRED ` +
+      `WHERE RES.RES_TYP = '${toolType}' AND RES.RES_NR(%2B) = '${tool}' AND RES.RES_ID = RES_STATUS.RES_ID ` +
+      `AND RES_STATUS_ASSIGN.STATUS = RES_STATUS.STATUS ` +
+      `AND RES_STATUS_ASSIGN.RES_TYP = RES.RES_TYP AND RES_REQUIRED.RES_NR_T = RES.RES_NR`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
+      map((res: any) => {
+        if (res.length !== 0) {
+          result.toolId = res[0].TOOLID;
+          result.tool = res[0].TOOLNAME;
+          result.status = res[0].STATUS;
+          result.statusDescription = res[0].STATUSDESCRIPTION;
+          result.belongsTo = res[0].REQUIREDRESOURCE ? res[0].REQUIREDRESOURCE : '';
+        }
+        return result;
+      })
+    );
+  }
+
+  getToolOfOperation(operation: string, machine: string): Observable<ToolInfo[]> {
+    const result: ToolInfo[] = [];
+
+    const toolSql =
+      `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS REQUIREDTOOL, SOLL_MENGE AS USAGE FROM MLST_HY ` +
+      ` WHERE KENNZ = 'W' AND AUFTRAG_NR ='${operation}'`;
+
+    const loadToolSql =
+      `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY6 AS RESOURCEID,RES_NR AS TOOLNAME, RES_NR_M AS REQUIREDRESOURCE ` +
+      `FROM HYBUCH, RES_BEDARFSZUORD, RES_BESTAND ` +
+      `WHERE KEY_TYPE = 'O' AND SUBKEY1 = '${machine}' AND RES_ID = SUBKEY6 AND RES_NR_T(%2B) = RES_NR`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${toolSql}`).pipe(
+      combineLatest(
+        this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${loadToolSql}`),
+        (tool, loaded) => {
+          if (tool !== null) {
+            (<Array<any>>tool).forEach(c => {
+              result.push(Object.assign(new ToolInfo(), {
+                operation: c.OPERATION,
+                usage: c.USAGE,
+                requiredTool: c.REQUIREDTOOL,
+                inputTool: ''
+              }));
+            });
+          }
+
+          if (loaded !== null) {
+            (<Array<any>>loaded).forEach(c => {
+              const find = result.find(item => item.requiredTool === c.REQUIREDRESOURCE);
+              if (find) {
+                find.inputTool = c.TOOLNAME;
+              }
+            });
+          }
+
+          return result;
+        })
+    );
+  }
+
   getComponentOfOperation(operation: string, machine: string): Observable<ComponentInfo[]> {
     const result: ComponentInfo[] = [];
 
-    const compSql =
+    const toolSql =
       `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS MATERIAL, SOLL_MENGE AS USAGE, SOLL_EINH AS UNIT, POS FROM MLST_HY ` +
-      ` WHERE AUFTRAG_NR ='${operation}' ORDER BY POS`;
+      ` WHERE KENNZ = 'M' AND AUFTRAG_NR ='${operation}' ORDER BY POS`;
 
     const loadCompSql =
       `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY3 AS BATCHID, ` +
@@ -24,13 +114,13 @@ export class NewFetchService {
       `RESTMENGE AS REMAINQTY, LOS_BESTAND.ARTIKEL AS MATERIAL FROM HYBUCH, LOS_BESTAND ` +
       `WHERE KEY_TYPE = 'C' AND TYP = 'E' AND SUBKEY1 = '${machine}' AND SUBKEY3 = LOSNR`;
 
-    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${compSql}`).pipe(
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${toolSql}`).pipe(
       combineLatest(
         this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${loadCompSql}`),
         (comp, loaded) => {
           if (comp !== null) {
             (<Array<any>>comp).forEach(c => {
-              result.push({
+              result.push(Object.assign(new ComponentInfo(), {
                 operatoin: c.OPERATION,
                 position: c.POS,
                 usage: c.USAGE,
@@ -38,13 +128,13 @@ export class NewFetchService {
                 material: c.MATERIAL,
                 inputBatch: '',
                 inputBatchQty: 0
-              });
+              }));
             });
           }
 
           if (loaded !== null) {
             (<Array<any>>loaded).forEach(c => {
-              const find = result.find(item => item.material === c.MATERIAL);
+              const find = result.find(item => item.material === c.MATERIAL && item.position === c.POS);
               if (find) {
                 find.inputBatch = c.BATCH;
                 find.inputBatchQty = c.REMAINQTY;
@@ -59,6 +149,63 @@ export class NewFetchService {
       )
     );
   }
+
+  getActiveOutputBatch(operation: string, machine: string): Observable<string> {
+    const sql =
+      `SELECT SUBKEY3 AS ACTIVEBATCHID FROM HYBUCH ` +
+      `WHERE KEY_TYPE = 'C' AND SUBKEY1='${machine}' AND SUBKEY2 = '${operation}' AND TYP = 'A' ` +
+      `AND STATUS1 = 'L'`;
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
+      map((res: any) => {
+        if (res.length !== 0) {
+          return res[0].ACTIVEBATCHID;
+        } else {
+          throw Error(`Machine ${machine} has no active output batch！`);
+        }
+      })
+    );
+  }
+
+  getMaterialMaster(materialName: string): Observable<IMaterialMaster> {
+    const materialMasterSql = `SELECT PART_NUMBER, PART_DESCRIPTION, CARTON_QUANTITY, PACKAGE_UNIT_QTY ` +
+      `FROM U_TE_MMLP_PRODUCT_MASTER WHERE PART_NUMBER = '${materialName}'`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${materialMasterSql}`).pipe(
+      map((res: any) => {
+        if (res.length !== 0) {
+          return {
+            name: res[0].PART_NUMBER,
+            description: res[0].PART_DESCRIPTION,
+            cartonQty: res[0].CARTON_QUANTITY,
+            palleteQty: res[0].PACKAGE_UNIT_QTY,
+          };
+        } else {
+          throw Error(`Material ${materialName} not exist！`);
+        }
+      }));
+  }
+
+  getOperation(operation: string) {
+    const operationSql =
+      `SELECT ARTIKEL AS MATERIAL, ARTIKEL_BEZ AS DESCRIPTION, AUNR AS WORKORDER, AGNR AS OPERATION, SOLL_MENGE_BAS AS TARGETQTY ` +
+      ` FROM AUFTRAGS_BESTAND WHERE A_TYP = 'AG' AND AUFTRAG_NR = '${operation}'`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${operationSql}`).pipe(
+      map((res: any) => {
+        if (res.length !== 0) {
+          return Object.assign(new OperationInfo(), {
+            workOrder: res[0].WORKORDER,
+            operation: res[0].OPERATION,
+            material: res[0].MATERIAL,
+            targetQty: res[0].TARGETQTY,
+          });
+        } else {
+          throw Error(`Operation ${operation} not exist！`);
+        }
+      })
+    );
+  }
+
 
   getMachineWithOperation(machineName: string): Observable<MachineInfo> {
     const machineInfo: MachineInfo = new MachineInfo();
@@ -185,7 +332,7 @@ export class NewFetchService {
     );
   }
 
-  getBatchInformation(batchName: string): Observable<BatchInfo> {
+  getBatchInformation(batchName: string, barCode?: string): Observable<BatchInfo> {
     const batchInfo: BatchInfo = new BatchInfo();
 
     const sql =
@@ -204,12 +351,39 @@ export class NewFetchService {
           batchInfo.qty = res[0].REMAINQUANTITY;
           batchInfo.startQty = res[0].QUANTITY;
           batchInfo.currentLocation = res[0].LOCATION;
-
+          batchInfo.barCode = barCode ? barCode : '';
           return of(batchInfo);
         } else {
           return throwError(`Batch ${batchName} not exist！`);
         }
       })
     );
+  }
+
+  getNextBatchName(): Observable<string> {
+    const sql = 'SELECT S_MPL_NEXT_LT.NEXTVAL FROM DUAL';
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
+      map(res => {
+        return `3SCXTOUT` + this.leftPad(res[0].NEXTVAL, 6);
+      })
+    );
+  }
+
+  private leftPad(str: any, len: number, ch: any = '0') {
+    str = String(str);
+
+    let i = -1;
+
+    if (!ch && ch !== 0) {
+      ch = ' ';
+    }
+
+    len = len - str.length;
+
+    while (++i < len) {
+      str = ch + str;
+    }
+
+    return str;
   }
 }

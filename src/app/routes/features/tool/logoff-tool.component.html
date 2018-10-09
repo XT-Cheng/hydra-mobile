@@ -6,28 +6,23 @@
       </div>
       <div class="weui-cell__bd">
         <input class="weui-input" #machine shareAutoFocus required name="machine" id="machine" (keydown.enter)='machineEntered($event)'
-          shareKeyHandler [keyHandler]='{nextInputId: "batch",inputing: inputing, req: request(requestMachineData, requestMachineDataSuccess, requestMachineDataFailed)}'
+          shareKeyHandler [keyHandler]='{nextInputId: "tool",inputing: inputing, req: request(requestMachineData, requestMachineDataSuccess, requestMachineDataFailed)}'
           [(ngModel)]='inputData.machineName' placeholder="Pls input Machine" weui-required>
       </div>
     </div>
-    <label for="weuiAgree" class="weui-agree">
-      <span class="weui-agree__text">
-        {{machineInfo.nextOPDisplay()}}
-      </span>
-    </label>
     <div class="weui-cell">
       <div class="weui-cell__hd">
-        <label class="weui-label">Batch</label>
+        <label class="weui-label">Tool</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #batch id="batch" name="batch" (keydown.enter)='batchEntered($event)' shareKeyHandler
-          [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestBatchData, requestBatchDataSuccess, requestBatchDataFailed)}'
-          [(ngModel)]='inputData.barCode' placeholder="Pls input Batch">
+        <input class="weui-input" #tool id="tool" name="tool" (keydown.enter)='toolEntered($event)' shareKeyHandler
+          [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestToolData, requestToolDataSuccess, requestToolDataFailed)}'
+          [(ngModel)]='inputData.tool' placeholder="Pls input Tool">
       </div>
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{batchInfo.display()}}
+        {{toolInfo.display()}}
       </span>
     </label>
     <div class="weui-cell">
@@ -45,23 +40,21 @@
         {{operatorInfo.display()}}
       </span>
     </label>
-    <div class="weui-cells__title">Mat. List</div>
+    <div class="weui-cells__title">Tool. List</div>
     <div class="weui-cells" style='overflow-y: scroll;height: 100px;'>
-      <div *ngFor='let comp of componenstList' class="weui-cell weui-cell_access">
+      <div *ngFor='let tool of toolList' class="weui-cell weui-cell_access">
         <div class="weui-cell__hd">
-          <i style='display: block;' [ngClass]='getResultClass(comp)'></i>
+          <i style='display: block;' [ngClass]='getResultClass(tool)'></i>
         </div>
         <div class="weui-cell__bd">
-          <p>{{comp.material + '.' + comp.position}}</p>
+          <p>{{tool.requiredTool}}</p>
         </div>
-        <div class="weui-cell__ft">{{comp.display()}}</div>
+        <div class="weui-cell__ft">{{tool.display()}}</div>
       </div>
     </div>
-    <div class='weui-flex'>
-      <button class='weui-flex__item' weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logonBatch, logonBatchSuccess, logonBatchFailed)'>Logon
-        Batch</button>
-      <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
-    </div>
+    <button class='weui-flex__item' weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logoffTool, logoffToolSuccess, logoffToolFailed)'>Logoff
+      Tool</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
 <weui-mask #mask [backdrop]="false"></weui-mask>

@@ -1,29 +1,31 @@
 {
-    "extends": "../tslint.json",
-    "rules": {
-        "directive-selector": [
-            true,
-            "attribute",
-            [
-                "app",
-                "share"
-            ],
-            "camelCase"
-        ],
-        "component-selector": [
-            true,
-            "element",
-            [
-                "app",
-                "layout",
-                "auth",
-                "operation",
-                "machine",
-                "material",
-                "batch",
-                "packing"
-            ],
-            "kebab-case"
-        ]
-    }
+  "extends": "../tslint.json",
+  "rules": {
+    "directive-selector": [
+      true,
+      "attribute",
+      [
+        "app",
+        "share"
+      ],
+      "camelCase"
+    ],
+    "component-selector": [
+      true,
+      "element",
+      [
+        "app",
+        "layout",
+        "auth",
+        "operation",
+        "machine",
+        "material",
+        "batch",
+        "operator",
+        "tool",
+        "packing"
+      ],
+      "kebab-case"
+    ]
+  }
 }

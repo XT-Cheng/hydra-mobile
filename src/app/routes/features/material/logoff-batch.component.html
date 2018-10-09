@@ -10,11 +10,6 @@
           [(ngModel)]='inputData.machineName' placeholder="Pls input Machine" weui-required>
       </div>
     </div>
-    <label for="weuiAgree" class="weui-agree">
-      <span class="weui-agree__text">
-        {{machineInfo.nextOPDisplay()}}
-      </span>
-    </label>
     <div class="weui-cell">
       <div class="weui-cell__hd">
         <label class="weui-label">Batch</label>
@@ -54,11 +49,12 @@
         <div class="weui-cell__bd">
           <p>{{comp.material + '.' + comp.position}}</p>
         </div>
-        <div class="weui-cell__ft">{{compDescription(comp)}}</div>
+        <div class="weui-cell__ft">{{comp.display()}}</div>
       </div>
     </div>
     <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logoffBatch, logoffBatchSuccess, logoffBatchFailed)'>Logoff
       Batch</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
 <weui-mask #mask [backdrop]="false"></weui-mask>

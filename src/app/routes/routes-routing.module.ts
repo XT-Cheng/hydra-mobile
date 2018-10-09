@@ -24,6 +24,13 @@ import { PartialConfirmOperationComponent } from './features/operation/partialCo
 import { AdjustBatchQuantityComponent } from './features/material/adjust-batch-quantity.component';
 import { LogonBatchComponent } from './features/material/logon-batch.component';
 import { LogoffBatchComponent } from './features/material/logoff-batch.component';
+import { ReplenishBatchComponent } from './features/material/replenish-batch.component';
+import { OperatorListComponent } from './features/operator/operatorList.component';
+import { LogonOperatorComponent } from './features/operator/logon-operator.component';
+import { LogoffOperatorComponent } from './features/operator/logoff-operator.component';
+import { ToolListComponent } from './features/tool/toolList.component';
+import { LogonToolComponent } from './features/tool/logon-tool.component';
+import { LogoffToolComponent } from './features/tool/logoff-tool.component';
 
 const routes: Routes = [
   {
@@ -32,8 +39,14 @@ const routes: Routes = [
     children: [
       { path: 'operation', component: OperationListComponent },
       { path: 'material', component: MaterialListComponent },
+      { path: 'operator', component: OperatorListComponent },
       { path: 'machine', component: MachineListComponent },
+      { path: 'tool', component: ToolListComponent },
+      { path: 'tool/logon', component: LogonToolComponent },
+      { path: 'tool/logoff', component: LogoffToolComponent },
       { path: 'operation/logon', component: LogonOperationComponent },
+      { path: 'operator/logon', component: LogonOperatorComponent },
+      { path: 'operator/logoff', component: LogoffOperatorComponent },
       { path: 'operation/semiBatchGen', component: GenerateOutputSemiBatchComponent },
       { path: 'operation/fgBatchGen', component: GenerateOutputFGBatchComponent },
       { path: 'operation/changeInputBatch', component: ChangeInputBatchComponent },
@@ -49,6 +62,7 @@ const routes: Routes = [
       { path: 'material/find', component: FindBatchComponent },
       { path: 'material/logon', component: LogonBatchComponent },
       { path: 'material/logoff', component: LogoffBatchComponent },
+      { path: 'material/replenish', component: ReplenishBatchComponent }
     ]
   },
   // auth

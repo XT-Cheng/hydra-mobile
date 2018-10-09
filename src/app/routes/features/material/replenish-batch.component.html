@@ -12,7 +12,7 @@
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{machineInfo.nextOPDisplay()}}
+        {{machineInfo.currentOPDisplay()}}
       </span>
     </label>
     <div class="weui-cell">
@@ -32,6 +32,21 @@
     </label>
     <div class="weui-cell">
       <div class="weui-cell__hd">
+        <label class="weui-label">Changed</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #changed id="changed" name="changed" (keydown.enter)='changedEntered($event)'
+          [disabled]='disableChangedBatch' shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestChangedData, requestChangedDataSuccess, requestChangedDataFailed)}'
+          [(ngModel)]='inputData.toBeChangedBarCode' required placeholder="Pls input Batch">
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{toBeChangedCompInfo.display()}}
+      </span>
+    </label>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
         <label class="weui-label">Operator</label>
       </div>
       <div class="weui-cell__bd">
@@ -46,22 +61,20 @@
       </span>
     </label>
     <div class="weui-cells__title">Mat. List</div>
-    <div class="weui-cells" style='overflow-y: scroll;height: 100px;'>
-      <div *ngFor='let comp of componenstList' class="weui-cell weui-cell_access">
+    <div class="weui-cells">
+      <div *ngFor='let comp of componenstList' class="weui-cell weui-cell_access" [ngStyle]='getChangedStyle(comp)'>
         <div class="weui-cell__hd">
           <i style='display: block;' [ngClass]='getResultClass(comp)'></i>
         </div>
         <div class="weui-cell__bd">
           <p>{{comp.material + '.' + comp.position}}</p>
         </div>
-        <div class="weui-cell__ft">{{comp.display()}}</div>
+        <div class="weui-cell__ft" style='flex: 1;font-size:17px;'>{{comp.display()}}</div>
       </div>
     </div>
-    <div class='weui-flex'>
-      <button class='weui-flex__item' weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logonBatch, logonBatchSuccess, logonBatchFailed)'>Logon
-        Batch</button>
-      <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
-    </div>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(changeBatch, changeBatchSuccess, changeBatchFailed)'>Replenish
+      Batch</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
 <weui-mask #mask [backdrop]="false"></weui-mask>

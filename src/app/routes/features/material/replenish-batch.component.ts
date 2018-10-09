@@ -9,44 +9,48 @@ import { BatchInfo, OperatorInfo, MachineInfo, ComponentInfo } from '@core/inter
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { BaseForm } from '../base.form';
 
-interface InputData {
+interface IInputData {
   machineName: string;
   barCode: string;
-  batchName: string;
+  toBeChangedBarCode: string;
   badge: string;
 }
 
-class InputData implements InputData {
+class InputData implements IInputData {
   machineName = '';
   barCode = '';
   badge = '';
-  batchName = '';
+  toBeChangedBarCode = '';
 }
 
 @Component({
-  selector: 'batch-logoff',
-  templateUrl: 'logoff-batch.component.html',
-  styleUrls: ['./logoff-batch.component.scss']
+  selector: 'batch-replenish',
+  templateUrl: 'replenish-batch.component.html',
+  styleUrls: ['./replenish-batch.component.scss']
 })
-export class LogoffBatchComponent extends BaseForm {
+export class ReplenishBatchComponent extends BaseForm {
   //#region View Children
 
   @ViewChild('machine') machineElem: ElementRef;
   @ViewChild('batch') batchElem: ElementRef;
   @ViewChild('operator') operatorElem: ElementRef;
+  @ViewChild('changed') changedElem: ElementRef;
 
   //#endregion
 
   //#region Protected member
 
   protected batchInfo: BatchInfo = new BatchInfo();
+  protected toBeChangedCompInfo: ComponentInfo = new ComponentInfo();
+  protected availableCompsInfo: ComponentInfo[] = [];
   protected operatorInfo: OperatorInfo = new OperatorInfo();
   protected machineInfo: MachineInfo = new MachineInfo();
   protected componenstList: ComponentInfo[] = [];
 
-  protected inputData: InputData = new InputData();
+  protected inputData: IInputData = new InputData();
+  protected disableChangedBatch = false;
 
-  protected title = `Batch Logoff`;
+  protected title = `Batch Replenish`;
 
   //#endregion
 
@@ -69,9 +73,8 @@ export class LogoffBatchComponent extends BaseForm {
 
   //#region Machine Reqeust
 
-  requestMachineDataSuccess = (ret) => {
-    this.machineInfo = ret.machine;
-    this.componenstList = ret.components;
+  requestMachineDataSuccess = (_) => {
+
   }
 
   requestMachineDataFailed = () => {
@@ -80,25 +83,22 @@ export class LogoffBatchComponent extends BaseForm {
   }
 
   requestMachineData = () => {
-    if (!this.inputData.machineName) {
-      this.machineInfo = new MachineInfo();
-      return of(this.machineInfo);
-    }
+    this.batchInfo = new BatchInfo();
+    this.toBeChangedCompInfo = new ComponentInfo();
+    this.availableCompsInfo = [];
 
     if (this.inputData.machineName === this.machineInfo.machine) {
-      return of({ machine: this.machineInfo, components: this.componenstList });
+      return of(null);
     }
 
     return this._fetchService.getMachineWithOperation(this.inputData.machineName).pipe(
       switchMap((machineInfo) => {
-        if (machineInfo.currentOperation) {
-          return throwError(`Machine ${this.inputData.machineName} has OP ${machineInfo.currentOperation} running!`);
-        }
         this.machineInfo = machineInfo;
         return this._fetchService.getComponentOfOperation(this.machineInfo.nextOperation, this.machineInfo.machine);
       }),
       map(componentList => {
-        return { machine: this.machineInfo, components: componentList };
+        this.componenstList = componentList;
+        return;
       })
     );
   }
@@ -107,41 +107,47 @@ export class LogoffBatchComponent extends BaseForm {
 
   //#region Batch Request
 
-  requestBatchDataSuccess = (ret) => {
-    this.batchInfo = ret;
-    this.inputData.barCode = this.batchInfo.batchName;
+  requestBatchDataSuccess = (_) => {
+
   }
 
   requestBatchDataFailed = () => {
-    this.inputData.barCode = this.inputData.batchName = '';
+    this.inputData.barCode = '';
     this.batchInfo = new BatchInfo();
     this.batchElem.nativeElement.focus();
   }
 
   requestBatchData = () => {
     if (!this.inputData.barCode) {
-      this.batchInfo = new BatchInfo();
-      return of(this.batchInfo);
+      return of(null);
     }
 
     if (this.inputData.barCode === this.batchInfo.barCode) {
-      return of(this.batchInfo);
+      return of(null);
     }
 
     return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
       switchMap((batchInfo: BatchInfo) => {
-        this.batchInfo = batchInfo;
-        return this._fetchService.getBatchInformation(batchInfo.batchName);
+        return this._fetchService.getBatchInformation(batchInfo.batchName, this.inputData.barCode);
       }),
       switchMap(batchInfo => {
-        const found = this.componenstList.some(c => {
-          return c.material === batchInfo.material && c.inputBatch === batchInfo.batchName;
+        this.batchInfo = batchInfo;
+        this.availableCompsInfo = this.componenstList.filter(c => {
+          return c.material === batchInfo.material && c.inputBatch;
         });
-        if (!found) {
-          return throwError(`Batch ${this.batchInfo.batchName} not logged on yet!`);
+        if (this.availableCompsInfo.length === 0) {
+          return throwError(`No Batch to be replenished!`);
+        } else if (this.availableCompsInfo.length > 1) {
+          this.changedElem.nativeElement.focus();
+        } else {
+          this.toBeChangedCompInfo = this.availableCompsInfo[0];
+          this.inputData.toBeChangedBarCode = this.toBeChangedCompInfo.inputBatch;
+          this.disableChangedBatch = true;
         }
 
-        return of(batchInfo);
+        this.inputData.barCode = this.batchInfo.batchName;
+
+        return of(null);
       }));
   }
 
@@ -198,6 +204,17 @@ export class LogoffBatchComponent extends BaseForm {
     this.operatorElem.nativeElement.focus();
   }
 
+  changedEntered(event) {
+    this.stopEvent(event);
+
+    if (this.form.controls['changed'].invalid) {
+      this.changedElem.nativeElement.select();
+      return;
+    }
+
+    this.operatorElem.nativeElement.focus();
+  }
+
   operatorEntered(event) {
     this.stopEvent(event);
 
@@ -213,27 +230,31 @@ export class LogoffBatchComponent extends BaseForm {
 
   //#region Exeuction
 
-  logoffBatchSuccess = () => {
-    this._tipService['primary'](`Batch ${this.batchInfo.batchName} Logged Off!`);
-    this.inputData.batchName = '';
+  changeBatchSuccess = () => {
+    this._tipService['primary'](`Batch ${this.batchInfo.batchName} Changed!`);
     this.inputData.barCode = '';
+    this.inputData.toBeChangedBarCode = '';
+
+    this.toBeChangedCompInfo = new ComponentInfo();
+    this.availableCompsInfo = [];
+
     this.batchElem.nativeElement.focus();
   }
 
-  logoffBatchFailed = () => {
+  changeBatchFailed = () => {
     this.machineElem.nativeElement.focus();
   }
 
-  logoffBatch = () => {
-    // Logoff Batch
-    const comp = this.componenstList.find(c => c.material === this.batchInfo.material && c.inputBatch === this.batchInfo.batchName);
-
-    return this._bapiService.logoffBatch(this.machineInfo.nextOperation, this.machineInfo.machine, this.operatorInfo.badge,
-      this.batchInfo.batchName, comp.position).pipe(
+  changeBatch = () => {
+    // Change Batch
+    return this._bapiService.changeInputBatch(this.machineInfo.currentOperation, this.machineInfo.machine,
+      this.operatorInfo.badge, this.toBeChangedCompInfo.inputBatch, this.batchInfo.batchName,
+      this.toBeChangedCompInfo.position, this.toBeChangedCompInfo.material).pipe(
         tap(_ => {
+          const comp = this.componenstList.find(c => c.inputBatch === this.toBeChangedCompInfo.inputBatch);
           this.componenstList = this.componenstList.map(c => {
             if (c.material === comp.material && c.position === comp.position) {
-              return Object.assign(c, { inputBatch: '', inputBatchQty: 0 });
+              return Object.assign(c, { inputBatch: this.batchInfo.batchName, inputBatchQty: this.batchInfo.qty });
             }
             return c;
           });
@@ -250,8 +271,10 @@ export class LogoffBatchComponent extends BaseForm {
     this.machineInfo = new MachineInfo();
     this.operatorInfo = new OperatorInfo();
     this.batchInfo = new BatchInfo();
-
+    this.toBeChangedCompInfo = new ComponentInfo();
+    this.availableCompsInfo = [];
     this.componenstList = [];
+    this.disableChangedBatch = false;
 
     this.machineElem.nativeElement.focus();
   }
@@ -264,7 +287,11 @@ export class LogoffBatchComponent extends BaseForm {
   //#endregion
 
   //#region Support methods
-
+  getChangedStyle(comp) {
+    return {
+      'background-color': (comp.inputBatch === this.toBeChangedCompInfo.inputBatch) ? 'lightpink' : 'white'
+    };
+  }
   getResultClass(comp) {
     return {
       'weui-icon-success': !!comp.inputBatch,

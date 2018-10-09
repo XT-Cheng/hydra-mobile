@@ -65,5 +65,6 @@
     </label>
     <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='logoffOperation()'>Logoff
       OP</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>

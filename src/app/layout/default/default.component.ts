@@ -35,4 +35,16 @@ export class LayoutDefaultComponent {
       this._status = false;
     });
   }
+
+  gotoTool() {
+    this._router.navigateByUrl('tool').then(() => {
+      this._status = false;
+    });
+  }
+
+  gotoOperator() {
+    this._router.navigateByUrl('operator').then(() => {
+      this._status = false;
+    });
+  }
 }
