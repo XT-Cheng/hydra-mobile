@@ -4,8 +4,8 @@ import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService } from 'ngx-weui';
 import { switchMap, map } from 'rxjs/operators';
-import { of } from 'rxjs';
-import { OperatorInfo, MachineInfo, ComponentInfo } from '@core/interface/common.interface';
+import { of, throwError } from 'rxjs';
+import { OperatorInfo, MachineInfo, ComponentInfo, ToolInfo } from '@core/interface/common.interface';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { BaseForm } from '../base.form';
 
@@ -16,7 +16,7 @@ interface InputData {
 
 class InputData implements InputData {
   machineName = '';
-  batchName = '';
+  badge = '';
 }
 
 @Component({
@@ -36,7 +36,8 @@ export class LogonOperationComponent extends BaseForm {
 
   protected operatorInfo: OperatorInfo = new OperatorInfo();
   protected machineInfo: MachineInfo = new MachineInfo();
-  protected componenstList: ComponentInfo[] = [];
+  protected componentList: ComponentInfo[] = [];
+  protected toolList: ToolInfo[] = [];
 
   protected inputData: InputData = new InputData();
 
@@ -63,9 +64,7 @@ export class LogonOperationComponent extends BaseForm {
 
   //#region Machine Reqeust
 
-  requestMachineDataSuccess = (ret) => {
-    this.machineInfo = ret.machine;
-    this.componenstList = ret.components;
+  requestMachineDataSuccess = (_) => {
   }
 
   requestMachineDataFailed = () => {
@@ -75,16 +74,23 @@ export class LogonOperationComponent extends BaseForm {
 
   requestMachineData = () => {
     if (this.inputData.machineName === this.machineInfo.machine) {
-      return of({ machine: this.machineInfo, components: this.componenstList });
+      return of(null);
     }
 
     return this._fetchService.getMachineWithOperation(this.inputData.machineName).pipe(
       switchMap((machineInfo) => {
+        if (machineInfo.currentOperation) {
+          return throwError(`Machine ${machineInfo.machine} has OP logged on!`);
+        }
         this.machineInfo = machineInfo;
         return this._fetchService.getComponentOfOperation(this.machineInfo.nextOperation, this.machineInfo.machine);
       }),
-      map(componentList => {
-        return { machine: this.machineInfo, components: componentList };
+      switchMap(componentList => {
+        this.componentList = componentList;
+        return this._fetchService.getToolOfOperation(this.machineInfo.nextOperation, this.machineInfo.machine);
+      }),
+      map(toolList => {
+        this.toolList = toolList;
       })
     );
   }
@@ -169,26 +175,33 @@ export class LogonOperationComponent extends BaseForm {
     this.machineInfo = new MachineInfo();
     this.operatorInfo = new OperatorInfo();
 
-    this.componenstList = [];
+    this.componentList = [];
+    this.toolList = [];
 
     this.machineElem.nativeElement.focus();
   }
 
   isValid() {
     return this.machineInfo.machine
-      && this.operatorInfo.badge && !this.componenstList.some(c => !c.inputBatch);
+      && this.operatorInfo.badge && !this.componentList.some(c => !c.inputBatch) && !this.toolList.some(c => !c.inputTool);
   }
 
   //#endregion
 
   //#region Support methods
 
-  getResultClass(comp) {
+  getResultClassOfComp(comp) {
     return {
       'weui-icon-success': !!comp.inputBatch,
       'weui-icon-warn': !comp.inputBatch
     };
   }
 
+  getResultClassOfTool(tool) {
+    return {
+      'weui-icon-success': !!tool.inputTool,
+      'weui-icon-warn': !tool.inputTool
+    };
+  }
   //#endregion
 }

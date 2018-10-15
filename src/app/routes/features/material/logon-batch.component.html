@@ -57,11 +57,9 @@
         <div class="weui-cell__ft">{{comp.display()}}</div>
       </div>
     </div>
-    <div class='weui-flex'>
-      <button class='weui-flex__item' weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logonBatch, logonBatchSuccess, logonBatchFailed)'>Logon
-        Batch</button>
-      <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
-    </div>
+    <button class='weui-flex__item' weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logonBatch, logonBatchSuccess, logonBatchFailed)'>Logon
+      Batch</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>
 <weui-mask #mask [backdrop]="false"></weui-mask>

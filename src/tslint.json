@@ -23,6 +23,7 @@
         "batch",
         "operator",
         "tool",
+        "bapi",
         "packing"
       ],
       "kebab-case"

@@ -33,6 +33,8 @@ import { LogoffOperatorComponent } from './features/operator/logoff-operator.com
 import { ToolListComponent } from './features/tool/toolList.component';
 import { LogonToolComponent } from './features/tool/logon-tool.component';
 import { LogoffToolComponent } from './features/tool/logoff-tool.component';
+import { ChangeMachineStatusComponent } from './features/machine/change-machine-status.component';
+import { BapiTestComponent } from './bapi.test.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
@@ -61,7 +63,8 @@ const TOOL_COMPONENTS = [
 ];
 
 const MACHINE_COMPONENTS = [
-  MachineListComponent
+  MachineListComponent,
+  ChangeMachineStatusComponent
 ];
 
 const MATERIAL_COMPONENTS = [
@@ -90,6 +93,7 @@ const COMPONENTS_NOROUTE = [];
     SharedModule],
   exports: [RouterModule],
   declarations: [
+    BapiTestComponent,
     ...OPERATION_COMPONENTS,
     ...MACHINE_COMPONENTS,
     ...MATERIAL_COMPONENTS,

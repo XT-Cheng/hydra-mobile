@@ -69,9 +69,7 @@ export class LogoffBatchComponent extends BaseForm {
 
   //#region Machine Reqeust
 
-  requestMachineDataSuccess = (ret) => {
-    this.machineInfo = ret.machine;
-    this.componenstList = ret.components;
+  requestMachineDataSuccess = (_) => {
   }
 
   requestMachineDataFailed = () => {
@@ -82,11 +80,11 @@ export class LogoffBatchComponent extends BaseForm {
   requestMachineData = () => {
     if (!this.inputData.machineName) {
       this.machineInfo = new MachineInfo();
-      return of(this.machineInfo);
+      return of(null);
     }
 
     if (this.inputData.machineName === this.machineInfo.machine) {
-      return of({ machine: this.machineInfo, components: this.componenstList });
+      return of(null);
     }
 
     return this._fetchService.getMachineWithOperation(this.inputData.machineName).pipe(
@@ -95,10 +93,10 @@ export class LogoffBatchComponent extends BaseForm {
           return throwError(`Machine ${this.inputData.machineName} has OP ${machineInfo.currentOperation} running!`);
         }
         this.machineInfo = machineInfo;
-        return this._fetchService.getComponentOfOperation(this.machineInfo.nextOperation, this.machineInfo.machine);
+        return this._fetchService.getLoggedOnBatchOfMachine(this.machineInfo.machine);
       }),
       map(componentList => {
-        return { machine: this.machineInfo, components: componentList };
+        this.componenstList = componentList;
       })
     );
   }
@@ -228,17 +226,13 @@ export class LogoffBatchComponent extends BaseForm {
     // Logoff Batch
     const comp = this.componenstList.find(c => c.material === this.batchInfo.material && c.inputBatch === this.batchInfo.batchName);
 
-    return this._bapiService.logoffBatch(this.machineInfo.nextOperation, this.machineInfo.machine, this.operatorInfo.badge,
+    return this._bapiService.logoffBatch(comp.operatoin, this.machineInfo.machine, this.operatorInfo.badge,
       this.batchInfo.batchName, comp.position).pipe(
         tap(_ => {
-          this.componenstList = this.componenstList.map(c => {
-            if (c.material === comp.material && c.position === comp.position) {
-              return Object.assign(c, { inputBatch: '', inputBatchQty: 0 });
-            }
-            return c;
+          this.componenstList = this.componenstList.filter(c => {
+            return !(c.inputBatch === comp.inputBatch);
           });
-        })
-      );
+        }));
   }
 
   //#endregion

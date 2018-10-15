@@ -2,6 +2,8 @@
 
 export interface MachineInfo {
   machine: string;
+  status: number;
+  statusDescription: string;
   description: string;
   currentOperation: string;
   currentMotherOperation: string;
@@ -15,10 +17,13 @@ export interface MachineInfo {
 
   currentOPDisplay(): string;
   nextOPDisplay(): string;
+  statusDisplay(): string;
 }
 
 export class MachineInfo implements MachineInfo {
   machine = '';
+  status = -1;
+  statusDescription = '';
   description = '';
   currentOutputBatch = '';
   currentOperation = '';
@@ -43,6 +48,9 @@ export class MachineInfo implements MachineInfo {
   }
   nextOPDisplay(): string {
     return `${this.nextOperationDescription()}, ${this.nextMotherOperationDescription()}`;
+  }
+  statusDisplay(): string {
+    return `Current Status: ${this.statusDescription}`;
   }
 }
 
@@ -76,6 +84,24 @@ export interface ReasonInfo {
 
 export class ReasonInfo implements ReasonInfo {
   code = '';
+  description = '';
+  display(): string {
+    return `Description: ${this.description}`;
+  }
+}
+
+//#endregion
+
+//#region Machine Status info
+
+export interface IMachineStatus {
+  status: number;
+  description: string;
+  display(): string;
+}
+
+export class MachineStatus implements IMachineStatus {
+  status = -1;
   description = '';
   display(): string {
     return `Description: ${this.description}`;

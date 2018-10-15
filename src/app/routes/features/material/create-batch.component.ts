@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { switchMap, catchError } from 'rxjs/operators';
+import { switchMap, catchError, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService } from 'ngx-weui';
@@ -16,6 +16,8 @@ interface InputData {
   materialBuffer: string;
   qty: number;
   badge: string;
+  numberOfSplits: string;
+  splittedQty: string;
 }
 
 class InputData implements InputData {
@@ -25,6 +27,8 @@ class InputData implements InputData {
   materialBuffer = '';
   material = '';
   qty = 0;
+  numberOfSplits = '1';
+  splittedQty = '';
 }
 
 @Component({
@@ -37,6 +41,7 @@ export class CreateBatchComponent extends BaseForm {
 
   @ViewChild('batch') batchElem: ElementRef;
   @ViewChild('materialBuffer') materialBufferElem: ElementRef;
+  @ViewChild('numberOfSplits') numberOfSplitsElem: ElementRef;
   @ViewChild('operator') operatorElem: ElementRef;
 
   //#endregion
@@ -83,12 +88,11 @@ export class CreateBatchComponent extends BaseForm {
 
   requestBatchData = () => {
     if (!this.inputData.barCode) {
-      this.batchInfo = new BatchInfo();
-      return of(this.batchInfo);
+      return of(null);
     }
 
     if (this.inputData.barCode === this.batchInfo.barCode || this.inputData.barCode === this.batchInfo.batchName) {
-      return of(this.batchInfo);
+      return of(null);
     }
 
     return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
@@ -114,8 +118,7 @@ export class CreateBatchComponent extends BaseForm {
   //#endregion
 
   //#region Buffer Reqeust
-  requestMaterialBufferDataSuccess = (bufferInfo) => {
-    this.bufferInfo = bufferInfo;
+  requestMaterialBufferDataSuccess = (_) => {
   }
 
   requestMaterialBufferDataFailed = () => {
@@ -125,22 +128,44 @@ export class CreateBatchComponent extends BaseForm {
 
   requestMaterialBufferData = () => {
     if (!this.inputData.materialBuffer) {
-      this.bufferInfo = new MaterialBufferInfo();
-      return of(this.bufferInfo);
+      return of(null);
     }
 
     if (this.inputData.materialBuffer === this.bufferInfo.name) {
-      return of(this.bufferInfo);
+      return of(null);
     }
 
-    return this._fetchService.getMaterialBuffer(this.inputData.materialBuffer);
+    return this._fetchService.getMaterialBuffer(this.inputData.materialBuffer).pipe(
+      map((buffer: MaterialBufferInfo) => this.bufferInfo = buffer
+      ));
+  }
+
+  //#endregion
+
+  //#region Number of Splits Reqeust
+  requestNumberOfSplitsDataSuccess = () => {
+  }
+
+  requestNumberOfSplitsDataFailed = () => {
+    this.numberOfSplitsElem.nativeElement.focus();
+  }
+
+  requestNumberOfSplitsData = () => {
+    if (this.inputData.numberOfSplits) {
+      if (parseInt(this.inputData.numberOfSplits, 10) > 1) {
+        if ((this.batchInfo.qty % parseInt(this.inputData.numberOfSplits, 10)) > 0) {
+          return throwError('Incorrect Child Count');
+        }
+      }
+    }
+
+    return of(null);
   }
 
   //#endregion
 
   //#region Operator Reqeust
-  requestOperatorDataSuccess = (operatorInfo) => {
-    this.operatorInfo = operatorInfo;
+  requestOperatorDataSuccess = (_) => {
   }
 
   requestOperatorDataFailed = () => {
@@ -150,18 +175,31 @@ export class CreateBatchComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
-    return this._fetchService.getOperatorByBadge(this.inputData.badge);
+    return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
+      map((operator: OperatorInfo) => this.operatorInfo = operator
+      ));
   }
   //#endregion
 
+  //#endregion
+
+  //#region Protected methods
+  protected getSplitInfo() {
+    const child = parseInt(this.inputData.numberOfSplits, 10);
+
+    if (this.batchInfo.qty > 0 && !isNaN(child)) {
+      if (child > 1) {
+        return `Child Qty: ${this.batchInfo.qty / child}`;
+      }
+    }
+  }
   //#endregion
 
   //#region Event Handler
@@ -182,6 +220,17 @@ export class CreateBatchComponent extends BaseForm {
 
     if (this.form.controls['materialBuffer'].invalid) {
       this.materialBufferElem.nativeElement.select();
+      return;
+    }
+
+    this.numberOfSplitsElem.nativeElement.focus();
+  }
+
+  numberOfSplitsEntered(event) {
+    this.stopEvent(event);
+
+    if (this.form.controls['numberOfSplits'].invalid) {
+      this.numberOfSplitsElem.nativeElement.select();
       return;
     }
 
@@ -211,6 +260,13 @@ export class CreateBatchComponent extends BaseForm {
   }
 
   createBatch = () => {
+    this.executionContext = {
+      batchName: this.batchInfo.batchName,
+      material: this.batchInfo.material,
+      qty: this.batchInfo.qty,
+      bufferName: this.bufferInfo.name,
+      operator: this.operatorInfo.badge
+    };
     return this._bapiService
       .createBatch(
         this.batchInfo.batchName,
@@ -218,6 +274,15 @@ export class CreateBatchComponent extends BaseForm {
         this.batchInfo.qty,
         this.bufferInfo.name,
         this.operatorInfo.badge
+      ).pipe(
+        switchMap(ret => {
+          const numberOfSplits = parseInt(this.inputData.numberOfSplits, 10);
+          if (numberOfSplits > 1) {
+            return this._bapiService.splitBatch(this.batchInfo,
+              numberOfSplits, this.batchInfo.qty / numberOfSplits, this.operatorInfo.badge);
+          }
+          return of(ret);
+        })
       );
   }
 

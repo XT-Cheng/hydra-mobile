@@ -1,0 +1,32 @@
+<form #f="ngForm">
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Type</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #type name="type" id="type" [(ngModel)]='inputData.type' required>
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Content</label>
+      </div>
+      <div class="weui-cell__bd">
+        <textarea class="weui-textarea" rows="3" weui-textarea #bapi shareAutoFocus name="bapi" id="bapi" [(ngModel)]='inputData.content'
+          required>
+        </textarea>
+      </div>
+    </div>
+    <button weui-button #execute name="execute" id="execute" (click)='doAction(executeBapi, executeBapiSuccess, executeBapiFailed)'>Execute</button>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Result</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #result name="result" id="result" [(ngModel)]='inputData.result' disabled>
+      </div>
+    </div>
+  </div>
+</form>
+<weui-mask #mask [backdrop]="false"></weui-mask>

@@ -12,7 +12,22 @@
     </div>
     <label for="weuiAgree" class="weui-agree">
       <span class="weui-agree__text">
-        {{machineInfo.nextOPDisplay()}}
+        {{machineInfo.statusDisplay()}}
+      </span>
+    </label>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Change To</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" [shareMin]='0' weui-input='number' #status (keydown.enter)='statusEntered($event)'
+          name="status" id="status" [(ngModel)]='inputData.status' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestMachineStatusData, requestMachineStatusDataSuccess, requestMachineStatusDataFailed)}'
+          placeholder="Pls input Status" weui-required required>
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{statusInfo.display()}}
       </span>
     </label>
     <div class="weui-cell">
@@ -30,38 +45,8 @@
         {{operatorInfo.display()}}
       </span>
     </label>
-    <weui-navbar>
-      <weui-tab heading="Mat. Logon">
-        <div class="weui-cells__title">Mat. List</div>
-        <div class="weui-cells">
-          <div *ngFor='let comp of componentList' class="weui-cell weui-cell_access">
-            <div class="weui-cell__hd">
-              <i style='display: block;' [ngClass]='getResultClassOfComp(comp)'></i>
-            </div>
-            <div class="weui-cell__bd">
-              <p>{{comp.material + '.' + comp.position}}</p>
-            </div>
-            <div class="weui-cell__ft">{{comp.display()}}</div>
-          </div>
-        </div>
-      </weui-tab>
-      <weui-tab heading="Tool Logon">
-        <div class="weui-cells__title">Tool. List</div>
-        <div class="weui-cells">
-          <div *ngFor='let tool of toolList' class="weui-cell weui-cell_access">
-            <div class="weui-cell__hd">
-              <i style='display: block;' [ngClass]='getResultClassOfTool(tool)'></i>
-            </div>
-            <div class="weui-cell__bd">
-              <p>{{tool.requiredTool}}</p>
-            </div>
-            <div class="weui-cell__ft">{{tool.display()}}</div>
-          </div>
-        </div>
-      </weui-tab>
-    </weui-navbar>
-    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(logonOperation, logonOperationSuccess, logonOperationFailed)'>Logon
-      Operation</button>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(changeStatus, changeStatusSuccess, changeStatusFailed)'>Change
+      Status</button>
     <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
   </div>
 </form>

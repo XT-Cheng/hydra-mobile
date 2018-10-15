@@ -2,12 +2,30 @@ import { ViewChild, ElementRef } from '@angular/core';
 import { MaskComponent, ToastService, ToptipsService } from 'ngx-weui';
 import { NgForm } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
-import { filter, tap, delay } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { TitleService } from '@core/title.service';
-import { Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { IBapiResult } from '@core/hydra/bapi/constants';
 
+interface ITranError {
+  context: any;
+  error: string;
+}
+
+interface ITranSuccess {
+  context: any;
+  message: string;
+}
+
 export abstract class BaseForm {
+  //#region Abstract property
+
+  protected errors: ITranError[] = [];
+  protected success: ITranSuccess[] = [];
+  protected executionContext: any;
+
+  //#endregion
+
   //#region Abstract property
 
   protected abstract title: string;
@@ -38,7 +56,7 @@ export abstract class BaseForm {
     protected _titleService: TitleService, protected _resetFormAfterSuccessExecution = true) {
     this._routeService.events
       .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(event => {
+      .subscribe(() => {
         this._titleService.setTitle(this.title);
       });
   }
@@ -108,9 +126,11 @@ export abstract class BaseForm {
         if (this._resetFormAfterSuccessExecution) {
           this.resetForm();
         }
+        this.genSuccess(`success`);
       }, (err) => {
         failed(err);
         this.end(err);
+        this.genErrors(err);
       });
   }
 
@@ -120,4 +140,33 @@ export abstract class BaseForm {
 
   //#endregion
 
+  //#region Private methods
+
+  private genSuccess(success) {
+    if (this.executionContext) {
+      if (this.success.length > 10) {
+        this.success.pop();
+      }
+
+      this.success.unshift({
+        context: this.executionContext,
+        message: success
+      });
+    }
+  }
+
+  private genErrors(err) {
+    if (this.executionContext) {
+      if (this.errors.length > 10) {
+        this.errors.pop();
+      }
+
+      this.errors.push({
+        context: this.executionContext,
+        error: err
+      });
+    }
+  }
+
+  //#endregion
 }

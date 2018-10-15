@@ -4,47 +4,46 @@ import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService } from 'ngx-weui';
 import { switchMap, map, tap } from 'rxjs/operators';
-import { throwError, of } from 'rxjs';
-import { BatchInfo, OperatorInfo, MachineInfo, ComponentInfo, ToolInfo, ResourceInfo } from '@core/interface/common.interface';
+import { of } from 'rxjs';
+import { OperatorInfo, MachineInfo, ComponentInfo, MachineStatus } from '@core/interface/common.interface';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { BaseForm } from '../base.form';
 
 interface InputData {
   machineName: string;
-  tool: string;
+  status: string;
   badge: string;
 }
 
 class InputData implements InputData {
   machineName = '';
-  tool = '';
-  badge = '';
+  status = '';
+  batchName = '';
 }
 
 @Component({
-  selector: 'tool-logoff',
-  templateUrl: 'logoff-tool.component.html',
-  styleUrls: ['./logoff-tool.component.scss']
+  selector: 'machine-change-status',
+  templateUrl: 'change-machine-status.component.html',
+  styleUrls: ['./change-machine-status.component.scss']
 })
-export class LogoffToolComponent extends BaseForm {
+export class ChangeMachineStatusComponent extends BaseForm {
   //#region View Children
 
   @ViewChild('machine') machineElem: ElementRef;
-  @ViewChild('tool') toolElem: ElementRef;
+  @ViewChild('status') statusElem: ElementRef;
   @ViewChild('operator') operatorElem: ElementRef;
 
   //#endregion
 
   //#region Protected member
 
-  protected toolInfo: ResourceInfo = new ResourceInfo();
   protected operatorInfo: OperatorInfo = new OperatorInfo();
   protected machineInfo: MachineInfo = new MachineInfo();
-  protected toolList: ToolInfo[] = [];
+  protected statusInfo: MachineStatus = new MachineStatus();
 
   protected inputData: InputData = new InputData();
 
-  protected title = `Tool Logoff`;
+  protected title = `Change Status`;
 
   //#endregion
 
@@ -58,7 +57,7 @@ export class LogoffToolComponent extends BaseForm {
     _toastService: ToastService,
     _tipService: ToptipsService
   ) {
-    super(_toastService, _routeService, _tipService, _titleService, false);
+    super(_toastService, _routeService, _tipService, _titleService);
   }
 
   //#endregion
@@ -80,56 +79,47 @@ export class LogoffToolComponent extends BaseForm {
       return of(null);
     }
 
-    return this._fetchService.getMachineWithOperation(this.inputData.machineName).pipe(
-      switchMap((machineInfo) => {
+    return this._fetchService.getMachineInformation(this.inputData.machineName).pipe(
+      tap(machineInfo => {
         this.machineInfo = machineInfo;
-        return this._fetchService.getLoggedOnToolOfMachine(this.machineInfo.machine);
-      }),
-      map(toolList => {
-        this.toolList = toolList;
+      })
+    );
+  }
+
+  //#region Machine Status Reqeust
+
+  requestMachineStatusDataSuccess = (_) => {
+  }
+
+  requestMachineStatusDataFailed = () => {
+    this.machineElem.nativeElement.select();
+    this.resetForm();
+  }
+
+  requestMachineStatusData = () => {
+    const status = parseInt(this.inputData.status, 10);
+
+    if (isNaN(status)) {
+      return of(null);
+    }
+
+    if (status === this.statusInfo.status) {
+      return of(null);
+    }
+
+    return this._fetchService.getMachineStatus(status).pipe(
+      tap(statusInfo => {
+        this.statusInfo = statusInfo;
       })
     );
   }
 
   //#endregion
 
-  //#region Batch Request
-
-  requestToolDataSuccess = (_) => {
-  }
-
-  requestToolDataFailed = () => {
-    this.inputData.tool = '';
-    this.toolInfo = new ResourceInfo();
-    this.toolElem.nativeElement.focus();
-  }
-
-  requestToolData = () => {
-    if (!this.inputData.tool) {
-      return of(null);
-    }
-
-    if (this.inputData.tool === this.toolInfo.tool) {
-      return of(null);
-    }
-
-    return this._fetchService.getResourceInformation(this.inputData.tool).pipe(
-      map(toolInfo => {
-        this.toolInfo = toolInfo;
-        const found = this.toolList.some(c => {
-          return this.toolInfo.tool === c.inputTool;
-        });
-        if (!found) {
-          return throwError(`Tool ${this.toolInfo.tool} not logged on yet!`);
-        }
-      }));
-  }
-
-  //#endregion
-
   //#region Operator Reqeust
 
-  requestOperatorDataSuccess = () => {
+  requestOperatorDataSuccess = (operatorInfo) => {
+    this.operatorInfo = operatorInfo;
   }
 
   requestOperatorDataFailed = () => {
@@ -147,13 +137,8 @@ export class LogoffToolComponent extends BaseForm {
       return of(this.operatorInfo);
     }
 
-    return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
-      map(operatorInfo => {
-        this.operatorInfo = operatorInfo;
-      })
-    );
+    return this._fetchService.getOperatorByBadge(this.inputData.badge);
   }
-  //#endregion
 
   //#endregion
 
@@ -167,14 +152,14 @@ export class LogoffToolComponent extends BaseForm {
       return;
     }
 
-    this.toolElem.nativeElement.focus();
+    this.statusElem.nativeElement.focus();
   }
 
-  toolEntered(event) {
+  statusEntered(event) {
     this.stopEvent(event);
 
-    if (this.form.controls['tool'].invalid) {
-      this.toolElem.nativeElement.select();
+    if (this.form.controls['status'].invalid) {
+      this.statusElem.nativeElement.select();
       return;
     }
 
@@ -196,28 +181,19 @@ export class LogoffToolComponent extends BaseForm {
 
   //#region Exeuction
 
-  logoffToolSuccess = () => {
-    this._tipService['primary'](`Tool ${this.toolInfo.tool} Logged Off!`);
-    this.inputData.tool = '';
-    this.toolInfo = new ResourceInfo();
-    this.toolElem.nativeElement.focus();
-  }
+  changeStatusSuccess = () => {
+    this._tipService['primary'](`Machine ${this.machineInfo.machine} Status change to ${this.statusInfo.description}!`);
 
-  logoffToolFailed = () => {
     this.machineElem.nativeElement.focus();
   }
 
-  logoffTool = () => {
-    // Logoff Tool
-    const tool = this.toolList.find(t => t.inputTool === this.toolInfo.tool);
-    return this._bapiService.logoffTool(tool.operation, this.machineInfo.machine,
-      this.toolInfo.toolId, this.operatorInfo.badge).pipe(
-        tap(_ => {
-          this.toolList = this.toolList.filter(c => {
-            return c.inputTool !== this.toolInfo.tool;
-          });
-        })
-      );
+  changeStatusFailed = () => {
+    this.machineElem.nativeElement.focus();
+  }
+
+  changeStatus = () => {
+    return this._bapiService.changeMachineStatus(this.machineInfo.machine, this.statusInfo.status,
+      this.inputData.badge);
   }
 
   //#endregion
@@ -228,28 +204,21 @@ export class LogoffToolComponent extends BaseForm {
     this.form.reset();
     this.machineInfo = new MachineInfo();
     this.operatorInfo = new OperatorInfo();
-    this.toolInfo = new ResourceInfo();
+    this.statusInfo = new MachineStatus();
 
-    this.toolList = [];
+    this.inputData = new InputData();
 
     this.machineElem.nativeElement.focus();
   }
 
   isValid() {
-    return this.toolInfo.tool && this.machineInfo.machine
-      && this.operatorInfo.badge;
+    return this.machineInfo.machine
+      && this.operatorInfo.badge && this.statusInfo.description;
   }
 
   //#endregion
 
   //#region Support methods
-
-  getResultClass(tool) {
-    return {
-      'weui-icon-success': !!tool.inputTool,
-      'weui-icon-warn': !tool.inputTool
-    };
-  }
 
   //#endregion
 }

@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, map } from 'rxjs/operators';
 import { ToptipsService, ToastService } from 'ngx-weui';
 import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
@@ -76,9 +76,8 @@ export class SplitBatchComponent extends BaseForm {
 
   //#region Batch Reqeust
 
-  requestBatchDataSuccess = (ret) => {
-    this.batchInfo = ret;
-    this.inputData.barCode = this.batchInfo.batchName;
+  requestBatchDataSuccess = () => {
+    this.inputData.batchName = this.inputData.barCode = this.batchInfo.batchName;
   }
 
   requestBatchDataFailed = () => {
@@ -88,19 +87,21 @@ export class SplitBatchComponent extends BaseForm {
 
   requestBatchData = () => {
     if (!this.inputData.barCode) {
-      this.batchInfo = new BatchInfo();
-      return of(this.batchInfo);
+      return of(null);
     }
 
-    if (this.inputData.barCode === this.batchInfo.barCode) {
-      return of(this.batchInfo);
+    if (this.inputData.barCode === this.batchInfo.barCode || this.inputData.barCode === this.batchInfo.batchName) {
+      return of(null);
     }
 
     return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
       switchMap((batchInfo: BatchInfo) => {
         this.batchInfo = batchInfo;
         return this._fetchService.getBatchInformation(batchInfo.batchName);
-      }));
+      }),
+      map((batchInfo: BatchInfo) => this.batchInfo = Object.assign(this.batchInfo, batchInfo, {
+        barCode: this.batchInfo.barCode
+      })));
   }
 
   //#endregion
@@ -149,8 +150,7 @@ export class SplitBatchComponent extends BaseForm {
 
   //#region Operator Reqeust
 
-  requestOperatorDataSuccess = (operatorInfo) => {
-    this.operatorInfo = operatorInfo;
+  requestOperatorDataSuccess = () => {
   }
 
   requestOperatorDataFailed = () => {
@@ -160,15 +160,16 @@ export class SplitBatchComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
-    return this._fetchService.getOperatorByBadge(this.inputData.badge);
+    return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
+      map((operator: OperatorInfo) => this.operatorInfo = operator)
+    );
   }
   //#endregion
 
@@ -230,6 +231,12 @@ export class SplitBatchComponent extends BaseForm {
   }
 
   splitBatch = () => {
+    this.executionContext = {
+      batchName: this.batchInfo.batchName,
+      numberOfSplits: parseInt(this.inputData.numberOfSplits, 10),
+      splittedQty: parseInt(this.inputData.splittedQty, 10),
+      operator: this.operatorInfo.badge
+    };
     // Split Batch
     return this._bapiService.splitBatch(this.batchInfo, parseInt(this.inputData.numberOfSplits, 10),
       parseInt(this.inputData.splittedQty, 10), this.operatorInfo.badge);
@@ -250,6 +257,7 @@ export class SplitBatchComponent extends BaseForm {
 
   isValid() {
     return this.batchInfo.batchName
-      && this.operatorInfo.badge;
+      && this.operatorInfo.badge &&
+      (<any>this.inputData.numberOfSplits * <any>this.inputData.splittedQty <= this.batchInfo.qty);
   }
 }

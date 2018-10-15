@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, of, OperatorFunction } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
-import { IBapiResult } from '@core/hydra/bapi/constants';
+import { IBapiResult, DialogTypeEnum } from '@core/hydra/bapi/constants';
 import { CreateBatch } from '@core/hydra/bapi/create.batch';
 import { WEBAPI_HOST } from '@core/constants';
 import { MoveBatch } from '@core/hydra/bapi/move.batch';
@@ -25,12 +25,23 @@ import { LogonUser } from '@core/hydra/bapi/logon.user';
 import { LogoffUser } from '@core/hydra/bapi/logoff.user';
 import { LogonTool } from '@core/hydra/bapi/logon.tool';
 import { LogoffTool } from '@core/hydra/bapi/logoff.tool';
+import { ChangeMachineStatus } from './change.machine.status';
+import { TestBapi } from './test.bapi';
 
 @Injectable()
 export class BapiService {
   url = 'bapi';
 
   constructor(protected http: HttpClient, private _fetchService: FetchService, private _newFetchService: NewFetchService) {
+  }
+
+  test(type: string, content: string) {
+    const typedString = type as keyof typeof DialogTypeEnum;
+    return new TestBapi(DialogTypeEnum[typedString], content).execute(this.http);
+  }
+
+  changeMachineStatus(machine: string, newStatus: number, badge: string) {
+    return new ChangeMachineStatus(machine, newStatus, badge).execute(this.http);
   }
 
   createBatch(batchName: string, materialNumber: string, batchQty: number,
@@ -199,13 +210,6 @@ export class BapiService {
       switchMap((name) => {
         batchName = name;
         return new LogonOperation(operation, machineName, badgeName, batchName).execute(this.http);
-      }),
-      switchMap(() => {
-        return this._fetchService.getOperation(operation);
-      }),
-      switchMap((ret) => {
-        const materialDescription = ret.MATERIALDESCRIPTION;
-        return new UpdateBatch(batchName, badgeName, null, null, materialDescription).execute(this.http);
       })
     );
   }

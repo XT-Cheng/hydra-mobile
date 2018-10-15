@@ -5,7 +5,7 @@ import { map, concatMap, combineLatest } from 'rxjs/operators';
 import { WEBAPI_HOST } from '@core/constants';
 import {
   MachineInfo, ReasonInfo, OperatorInfo, BatchInfo, MaterialBufferInfo, ComponentInfo,
-  IMaterialMaster, MaterialMaster, OperationInfo, ToolInfo, ResourceInfo
+  IMaterialMaster, MaterialMaster, OperationInfo, ToolInfo, ResourceInfo, MachineStatus
 } from '@core/interface/common.interface';
 
 @Injectable()
@@ -34,7 +34,7 @@ export class NewFetchService {
       }));
   }
 
-  getResourceInformation(tool: string, toolType: string = 'WNR'): Observable<ResourceInfo> {
+  getResourceInformation(tool: string, toolType: string = 'VOR'): Observable<ResourceInfo> {
     const result = new ResourceInfo();
 
     const sql =
@@ -65,7 +65,7 @@ export class NewFetchService {
 
     const toolSql =
       `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS REQUIREDTOOL, SOLL_MENGE AS USAGE FROM MLST_HY ` +
-      ` WHERE KENNZ = 'W' AND AUFTRAG_NR ='${operation}'`;
+      ` WHERE KENNZ = 'V' AND AUFTRAG_NR ='${operation}'`;
 
     const loadToolSql =
       `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY6 AS RESOURCEID,RES_NR AS TOOLNAME, RES_NR_M AS REQUIREDRESOURCE ` +
@@ -101,10 +101,58 @@ export class NewFetchService {
     );
   }
 
+  getLoggedOnBatchOfMachine(machine: string): Observable<ComponentInfo[]> {
+    const result: ComponentInfo[] = [];
+
+    const loadCompSql =
+      `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY3 AS BATCHID, ` +
+      `LOS_BESTAND.LOSNR AS BATCH, SUBKEY5 AS POS, MENGE AS QTY, ` +
+      `RESTMENGE AS REMAINQTY, LOS_BESTAND.ARTIKEL AS MATERIAL FROM HYBUCH, LOS_BESTAND ` +
+      `WHERE KEY_TYPE = 'C' AND TYP = 'E' AND SUBKEY1 = '${machine}' AND SUBKEY3 = LOSNR`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${loadCompSql}`).pipe(
+      map((loaded: any) => {
+        loaded.forEach(c => {
+          result.push(Object.assign(new ComponentInfo(), {
+            inputBatch: c.BATCH,
+            inputBatchQty: c.REMAINQTY,
+            operatoin: c.OPERATION,
+            position: c.POS,
+            material: c.MATERIAL,
+          }));
+        });
+
+        return result;
+      }));
+  }
+
+  getLoggedOnToolOfMachine(machine: string): Observable<ToolInfo[]> {
+    const result: ToolInfo[] = [];
+
+    const loadToolSql =
+      `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY6 AS RESOURCEID,RES_NR AS TOOLNAME, RES_NR_M AS REQUIREDRESOURCE ` +
+      `FROM HYBUCH, RES_BEDARFSZUORD, RES_BESTAND ` +
+      `WHERE KEY_TYPE = 'O' AND SUBKEY1 = '${machine}' AND RES_ID = SUBKEY6 AND RES_NR_T(%2B) = RES_NR`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${loadToolSql}`).pipe(
+      map((loaded: any) => {
+        loaded.forEach(c => {
+          result.push(Object.assign(new ToolInfo(), {
+            operation: c.OPERATION,
+            requiredTool: c.REQUIREDRESOURCE,
+            inputTool: c.TOOLNAME
+          }));
+        });
+
+        return result;
+      }));
+  }
+
+
   getComponentOfOperation(operation: string, machine: string): Observable<ComponentInfo[]> {
     const result: ComponentInfo[] = [];
 
-    const toolSql =
+    const sql =
       `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS MATERIAL, SOLL_MENGE AS USAGE, SOLL_EINH AS UNIT, POS FROM MLST_HY ` +
       ` WHERE KENNZ = 'M' AND AUFTRAG_NR ='${operation}' ORDER BY POS`;
 
@@ -114,7 +162,7 @@ export class NewFetchService {
       `RESTMENGE AS REMAINQTY, LOS_BESTAND.ARTIKEL AS MATERIAL FROM HYBUCH, LOS_BESTAND ` +
       `WHERE KEY_TYPE = 'C' AND TYP = 'E' AND SUBKEY1 = '${machine}' AND SUBKEY3 = LOSNR`;
 
-    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${toolSql}`).pipe(
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
       combineLatest(
         this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${loadCompSql}`),
         (comp, loaded) => {
@@ -206,6 +254,27 @@ export class NewFetchService {
     );
   }
 
+  getMachineInformation(machineName: string): Observable<MachineInfo> {
+    const machineInfo: MachineInfo = new MachineInfo();
+
+    const machineSql =
+      `SELECT MACHINE.MASCH_NR AS MACHINE, STATUS.M_STATUS AS STATUS, TEXT.STOER_TEXT AS TEXT ` +
+      `FROM MASCHINEN MACHINE, MASCHINEN_STATUS STATUS, STOERTEXTE TEXT ` +
+      `WHERE MACHINE.MASCH_NR = '${machineName}' ` +
+      `AND STATUS.MASCH_NR = MACHINE.MASCH_NR AND TEXT.STOERTXT_NR = STATUS.M_STATUS`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${machineSql}`).pipe(
+      map((res: any) => {
+        if (res.length !== 0) {
+          machineInfo.machine = machineName;
+          machineInfo.status = res[0].STATUS;
+          machineInfo.statusDescription = res[0].TEXT;
+          return machineInfo;
+        } else {
+          throw Error(`Machine ${machineName} not exist！`);
+        }
+      }));
+  }
 
   getMachineWithOperation(machineName: string): Observable<MachineInfo> {
     const machineInfo: MachineInfo = new MachineInfo();
@@ -258,6 +327,25 @@ export class NewFetchService {
           return of(reasonInfo);
         } else {
           return throwError(`Reason ${reason} not exist！`);
+        }
+      }));
+  }
+
+  getMachineStatus(status: number): Observable<MachineStatus> {
+    const statusInfo: MachineStatus = new MachineStatus();
+
+    const statusSql =
+      `SELECT STOERTXT_NR AS STATUS, STOER_TEXT AS DESCRIPTION FROM STOERTEXTE ` +
+      `WHERE STOERTXT_NR = ${status} `;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${statusSql}`).pipe(
+      map((res: any) => {
+        if (res.length !== 0) {
+          statusInfo.status = status;
+          statusInfo.description = res[0].DESCRIPTION;
+          return statusInfo;
+        } else {
+          throw Error(`Machine Status ${status} not exist！`);
         }
       }));
   }

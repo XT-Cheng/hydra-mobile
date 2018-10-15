@@ -1,6 +1,6 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, map } from 'rxjs/operators';
 import { ToptipsService, ToastService } from 'ngx-weui';
 import { TitleService } from '@core/title.service';
 import { Router } from '@angular/router';
@@ -68,8 +68,7 @@ export class MoveBatchComponent extends BaseForm {
 
   //#region Batch Reqeust
 
-  requestBatchDataSuccess = (ret) => {
-    this.batchInfo = ret;
+  requestBatchDataSuccess = (_) => {
     this.inputData.batchName = this.inputData.barCode = this.batchInfo.batchName;
   }
 
@@ -80,26 +79,27 @@ export class MoveBatchComponent extends BaseForm {
 
   requestBatchData = () => {
     if (!this.inputData.barCode) {
-      this.batchInfo = new BatchInfo();
-      return of(this.batchInfo);
+      return of(null);
     }
 
-    if (this.inputData.barCode === this.batchInfo.barCode) {
-      return of(this.batchInfo);
+    if (this.inputData.barCode === this.batchInfo.barCode || this.inputData.barCode === this.batchInfo.batchName) {
+      return of(null);
     }
 
     return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
       switchMap((batchInfo: BatchInfo) => {
         this.batchInfo = batchInfo;
         return this._fetchService.getBatchInformation(batchInfo.batchName);
-      }));
+      }),
+      map((batchInfo: BatchInfo) => this.batchInfo = Object.assign(this.batchInfo, batchInfo, {
+        barCode: this.batchInfo.barCode
+      })));
   }
 
   //#endregion
 
   //#region Buffer Reqeust
-  requestMaterialBufferDataSuccess = (bufferInfo) => {
-    this.bufferInfo = bufferInfo;
+  requestMaterialBufferDataSuccess = (_) => {
   }
 
   requestMaterialBufferDataFailed = () => {
@@ -109,23 +109,28 @@ export class MoveBatchComponent extends BaseForm {
 
   requestMaterialBufferData = () => {
     if (!this.inputData.materialBuffer) {
-      this.bufferInfo = new MaterialBufferInfo();
-      return of(this.bufferInfo);
+      return of(null);
     }
 
     if (this.inputData.materialBuffer === this.bufferInfo.name) {
-      return of(this.bufferInfo);
+      return of(null);
     }
 
-    return this._fetchService.getMaterialBuffer(this.inputData.materialBuffer);
+    return this._fetchService.getMaterialBuffer(this.inputData.materialBuffer).pipe(
+      map((bufferInfo: MaterialBufferInfo) => {
+        if (bufferInfo.name === this.batchInfo.currentLocation) {
+          throw Error(`Batch alreaday in Location ${this.batchInfo.currentLocation}`);
+        }
+        this.bufferInfo = bufferInfo;
+      })
+    );
   }
 
   //#endregion
 
   //#region Operator Reqeust
 
-  requestOperatorDataSuccess = (operatorInfo) => {
-    this.operatorInfo = operatorInfo;
+  requestOperatorDataSuccess = () => {
   }
 
   requestOperatorDataFailed = () => {
@@ -135,15 +140,16 @@ export class MoveBatchComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
-    return this._fetchService.getOperatorByBadge(this.inputData.badge);
+    return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
+      map((operator: OperatorInfo) => this.operatorInfo = operator)
+    );
   }
   //#endregion
 
@@ -196,6 +202,11 @@ export class MoveBatchComponent extends BaseForm {
   }
 
   moveBatch = () => {
+    this.executionContext = {
+      batchName: this.batchInfo.batchName,
+      bufferName: this.bufferInfo.name,
+      operator: this.operatorInfo.badge
+    };
     // Move Batch
     return this._bapiService.moveBatch(this.batchInfo.batchName, this.bufferInfo.name, this.operatorInfo.badge);
   }

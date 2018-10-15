@@ -21,6 +21,8 @@ export enum DialogTypeEnum {
   CHANGE_INPUT_BATCH = 'CE_WL',
   LOGON_TOOL = 'RES_AN',
   LOGOFF_TOOL = 'RES_AB',
+  CHANGE_MACHINE_STATUS = 'M_MST',
+  STROKE_POST = 'M_AST'
 }
 
 export const DIALOG_USER = 2500;

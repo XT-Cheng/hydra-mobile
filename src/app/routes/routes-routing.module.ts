@@ -31,12 +31,15 @@ import { LogoffOperatorComponent } from './features/operator/logoff-operator.com
 import { ToolListComponent } from './features/tool/toolList.component';
 import { LogonToolComponent } from './features/tool/logon-tool.component';
 import { LogoffToolComponent } from './features/tool/logoff-tool.component';
+import { ChangeMachineStatusComponent } from './features/machine/change-machine-status.component';
+import { BapiTestComponent } from './bapi.test.component';
 
 const routes: Routes = [
   {
     path: '',
     component: LayoutDefaultComponent,
     children: [
+      { path: 'bapi/test', component: BapiTestComponent },
       { path: 'operation', component: OperationListComponent },
       { path: 'material', component: MaterialListComponent },
       { path: 'operator', component: OperatorListComponent },
@@ -62,7 +65,8 @@ const routes: Routes = [
       { path: 'material/find', component: FindBatchComponent },
       { path: 'material/logon', component: LogonBatchComponent },
       { path: 'material/logoff', component: LogoffBatchComponent },
-      { path: 'material/replenish', component: ReplenishBatchComponent }
+      { path: 'material/replenish', component: ReplenishBatchComponent },
+      { path: 'machine/changestatus', component: ChangeMachineStatusComponent }
     ]
   },
   // auth
