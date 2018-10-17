@@ -1,13 +1,12 @@
 import { Component, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
-import { ToastService, ToptipsService, DialogService, DialogConfig, PopupComponent } from 'ngx-weui';
-import { filter, tap, catchError, switchMap } from 'rxjs/operators';
-import { NgForm, Validators } from '@angular/forms';
+import { ToastService, ToptipsService } from 'ngx-weui';
+import { switchMap, map } from 'rxjs/operators';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
-import { MachineInfo, ReasonInfo, OperatorInfo, BatchInfo } from '@core/interface/common.interface';
-import { throwError, of } from 'rxjs';
+import { ReasonInfo, OperatorInfo, BatchInfo } from '@core/interface/common.interface';
+import { of } from 'rxjs';
 import { BaseForm } from '../base.form';
 
 interface InputData {
@@ -70,10 +69,8 @@ export class AdjustBatchQuantityComponent extends BaseForm {
 
   //#region Batch Reqeust
 
-  requestBatchDataSuccess = (batchInfo) => {
-    this.batchInfo = batchInfo;
-    this.inputData.barCode = this.inputData.batchName = this.batchInfo.batchName;
-    this.inputData.newQty = this.batchInfo.qty;
+  requestBatchDataSuccess = () => {
+    this.inputData.batchName = this.inputData.barCode = this.batchInfo.batchName;
     setTimeout(() => {
       this.newQtyElem.nativeElement.select();
     }, 0);
@@ -86,18 +83,24 @@ export class AdjustBatchQuantityComponent extends BaseForm {
 
   requestBatchData = () => {
     if (!this.inputData.barCode) {
-      this.batchInfo = new BatchInfo();
-      return of(this.batchInfo);
+      return of(null);
     }
 
     if (this.inputData.barCode === this.batchInfo.barCode) {
-      return of(this.batchInfo);
+      return of(null);
     }
 
     return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
       switchMap((batchInfo: BatchInfo) => {
         this.batchInfo = batchInfo;
+
         return this._fetchService.getBatchInformation(batchInfo.batchName);
+      }),
+      map((batchInfo: BatchInfo) => {
+        this.batchInfo = Object.assign(this.batchInfo, batchInfo, {
+          barCode: this.batchInfo.barCode
+        });
+        this.inputData.newQty = this.batchInfo.qty;
       }));
   }
 
@@ -105,8 +108,7 @@ export class AdjustBatchQuantityComponent extends BaseForm {
 
   //#region Operator Reqeust
 
-  requestOperatorDataSuccess = (operatorInfo) => {
-    this.operatorInfo = operatorInfo;
+  requestOperatorDataSuccess = () => {
   }
 
   requestOperatorDataFailed = () => {
@@ -116,15 +118,16 @@ export class AdjustBatchQuantityComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
-    return this._fetchService.getOperatorByBadge(this.inputData.badge);
+    return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
+      map((operator: OperatorInfo) => this.operatorInfo = operator)
+    );
   }
 
   //#endregion
@@ -178,6 +181,12 @@ export class AdjustBatchQuantityComponent extends BaseForm {
   }
 
   adjustQuantity = () => {
+    this.executionContext = {
+      batchName: this.batchInfo.batchName,
+      newQty: this.inputData.newQty,
+      operator: this.operatorInfo.badge
+    };
+
     return this._bapiService.updateBatch(this.batchInfo.batchName, this.operatorInfo.badge, this.inputData.newQty);
   }
 

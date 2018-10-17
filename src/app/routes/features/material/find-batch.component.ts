@@ -1,12 +1,9 @@
 import { Component, ViewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
-import { BapiService } from '@core/hydra/bapi/bapi.service';
-import { FetchService } from '@core/hydra/fetch.service';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
-import { ToastService, ToptipsService, DialogService, DialogConfig, PopupComponent } from 'ngx-weui';
-import { filter, switchMap, map, tap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { of, throwError, Subscription, Subject, Observable } from 'rxjs';
-import { NgForm } from '@angular/forms';
+import { ToastService, ToptipsService } from 'ngx-weui';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
+import { of, Subscription, Subject, Observable } from 'rxjs';
 import { BatchInfo } from '@core/interface/common.interface';
 import { BaseForm } from '../base.form';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
@@ -31,17 +28,24 @@ export class FindBatchComponent extends BaseForm implements OnInit, OnDestroy {
   };
 
   protected batchs: Array<BatchInfo> = [];
-  protected searchResults: Observable<Array<string>> = new Observable();
+  protected partSearchResults: Observable<Array<string>> = new Observable();
+  protected bufferSearchResults: Observable<Array<string>> = new Observable();
 
-  protected title = `Adjust Batch Qty`;
+  protected title = `Find Batch`;
 
   //#endregion
 
   // #regoin Private member
 
-  private _sub: Subscription;
-  private _subject = new Subject<string>();
+  private _partSub: Subscription;
+  private _partSubject = new Subject<string>();
+  private _bufferSub: Subscription;
+  private _bufferSubject = new Subject<string>();
+
   private _debounceTime = 500;
+
+  private _searchingPart = false;
+  private _searchingBuffer = false;
 
   //#endregion
 
@@ -49,7 +53,6 @@ export class FindBatchComponent extends BaseForm implements OnInit, OnDestroy {
 
   constructor(
     private _fetchService: NewFetchService,
-    private _bapiService: BapiService,
     _routeService: Router,
     _titleService: TitleService,
     _toastService: ToastService,
@@ -63,44 +66,112 @@ export class FindBatchComponent extends BaseForm implements OnInit, OnDestroy {
   //#region Interface implementation
 
   ngOnInit() {
-    this._sub = this._subject
+    this._partSub = this._partSubject
       .pipe(debounceTime(this._debounceTime), distinctUntilChanged())
       .subscribe((term: string) => {
-        this.search(term);
+        this._searchingPart = true;
+        this.searchPart(term);
+      });
+
+    this._bufferSub = this._bufferSubject
+      .pipe(debounceTime(this._debounceTime), distinctUntilChanged())
+      .subscribe((term: string) => {
+        this._searchingBuffer = true;
+        this.searchBuffer(term);
       });
   }
 
   ngOnDestroy(): void {
-    if (this._sub) { this._sub.unsubscribe(); }
+    if (this._partSub) { this._partSub.unsubscribe(); }
+    if (this._bufferSub) { this._bufferSub.unsubscribe(); }
   }
 
   //#endregion
 
   //#region Event Handler
-  startSearch() {
-    this._subject.next(this.inputData.part);
+  startSearchPart() {
+    this._partSubject.next(this.inputData.part);
   }
 
-  search(term: string) {
-    if (term) {
-      this.searchResults = this._fetchService.getBatchMaterial(term);
-    } else {
-      this.searchResults = of([]);
-    }
+  startSearchBuffer() {
+    this._bufferSubject.next(this.inputData.materialBuffer);
   }
 
   partClicked(part) {
+    this._searchingPart = false;
     this.inputData.part = part;
-    this._subject.next('');
+    this._partSubject.next('');
+  }
+
+  bufferClicked(buffer) {
+    this._searchingBuffer = false;
+    this.inputData.materialBuffer = buffer;
+    this._bufferSubject.next('');
+  }
+
+  //#endregion
+
+  //#region Protected methods
+
+  protected hasNoBufferResult(results) {
+    return this._searchingBuffer && results.length <= 0;
+  }
+
+  protected hasNoPartResult(results) {
+    return this._searchingPart && results.length <= 0;
+  }
+
+  protected searchPart(part: string) {
+    if (part) {
+      this.partSearchResults = this._fetchService.searchBatchPart(part);
+    } else {
+      this._searchingPart = false;
+      this.partSearchResults = of([]);
+    }
+  }
+
+  protected searchBuffer(buffer: string) {
+    if (buffer) {
+      this.bufferSearchResults = this._fetchService.searchBatchBuffer(buffer);
+    } else {
+      this._searchingBuffer = false;
+      this.bufferSearchResults = of([]);
+    }
   }
 
   //#endregion
 
   //#region Exeuction
 
-  findBatch() {
-
+  searchBatch = () => {
+    this.executionContext = {
+      material: this.inputData.part,
+      bufferName: this.inputData.materialBuffer,
+    };
+    this.batchs = [];
+    return this._fetchService.searchBatch(
+      this.inputData.part, this.inputData.materialBuffer
+    ).pipe(
+      map(ret => {
+        this.batchs = ret;
+        return {
+          isSuccess: true,
+          error: '',
+          description: '',
+          content: ''
+        };
+      })
+    );
   }
+
+  searchBatchSuccess = () => {
+    // Nothing to do
+  }
+
+  searchBatchFailed = () => {
+    // Nothing to do
+  }
+
   //#endregion
 
   //#region Override methods
@@ -110,7 +181,7 @@ export class FindBatchComponent extends BaseForm implements OnInit, OnDestroy {
   }
 
   isValid() {
-    return true;
+    return !this._searchingPart && !this._searchingBuffer && (this.inputData.part || this.inputData.materialBuffer);
   }
 
   //#endregion

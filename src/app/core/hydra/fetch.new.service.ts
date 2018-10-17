@@ -350,18 +350,92 @@ export class NewFetchService {
       }));
   }
 
-  getBatchMaterial(search: string): Observable<string[]> {
+  searchBatchPart(search: string): Observable<string[]> {
     const materialSql =
-      `SELECT DISTINCT(ARTIKEL) AS MATERIAL FROM LOS_BESTAND WHERE ARTIKEL LIKE '${search + '%25'}' ORDER BY ARTIKEL`;
-    // `SELECT DISTINCT(ARTIKEL) AS MATERIAL FROM LOS_BESTAND WHERE ARTIKEL LIKE '${search}' ORDER BY ARTIKEL`;
-
-    const ret = [];
+      `SELECT DISTINCT(ARTIKEL) AS MATERIAL FROM LOS_BESTAND WHERE ARTIKEL LIKE '${'%25' + search + '%25'}' ORDER BY ARTIKEL`;
 
     return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${materialSql}`).pipe(
       concatMap((res: any) => {
         return of(res.map(row => row.MATERIAL));
       }));
   }
+
+  searchBatchBuffer(search: string): Observable<string[]> {
+    const bufferSql =
+      `SELECT MAT_PUF AS BUFFERNAME FROM MAT_PUFFER WHERE MAT_PUF LIKE '${'%25' + search + '%25'}' ORDER BY MAT_PUF`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${bufferSql}`).pipe(
+      concatMap((res: any) => {
+        return of(res.map(row => row.BUFFERNAME));
+      }));
+  }
+
+  getChildrenOfBuffer(bufferName: string): Observable<string[]> {
+    const bufferSql =
+      `SELECT MAT_PUF AS BUFFERNAME FROM MAT_PUFFER WHERE MAT_PUF <> ${bufferName}` +
+      `START WITH MAT_PUF = ${bufferName} ` +
+      `CONNECT BY PRIOR MAT_PUF = H_MAT_PUF ORDER SIBLINGS BY MAT_PUF`;
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${bufferSql}`).pipe(
+      concatMap((res: any) => {
+        return of(res.map(row => row.BUFFERNAME));
+      }));
+  }
+
+  searchBatch(material: string, bufferName: string): Observable<BatchInfo[]> {
+    const batchInfos: BatchInfo[] = [];
+
+    let materialCondition, bufferCondition;
+
+    if (material) {
+      materialCondition = `LOS_BESTAND.ARTIKEL = '${material}'`;
+    }
+
+    if (bufferName) {
+      bufferCondition = `LOS_BESTAND.MAT_PUF IN (SELECT MAT_PUF AS BUFFERNAME FROM MAT_PUFFER ` +
+        `START WITH MAT_PUF = '${bufferName}' ` +
+        `CONNECT BY PRIOR MAT_PUF = H_MAT_PUF)`;
+    }
+
+    let sql =
+      `SELECT LOS_BESTAND.LOSNR AS BATCHNAME, LOS_BESTAND.LOSNR AS ID, ` +
+      `LOS_BESTAND.HZ_TYP AS MATERIALTYPE, ` +
+      `LOS_BESTAND.ARTIKEL AS MATERIALNUMBER, LOS_BESTAND.ARTIKEL_BEZ AS MATERIALDESC, LOS_BESTAND.MENGE AS QUANTITY, ` +
+      `LOS_BESTAND.RESTMENGE AS REMAINQUANTITY, LOS_BESTAND.EINHEIT AS UNIT, ` +
+      `LOS_BESTAND.MAT_PUF AS LOCATION, MAT_PUFFER.BEZ AS LOCDESC, ` +
+      `STATUS AS STATUS, KLASSE AS CLASS FROM MAT_PUFFER, LOS_BESTAND ` +
+      `WHERE MAT_PUFFER.MAT_PUF = LOS_BESTAND.MAT_PUF `;
+
+    if (materialCondition) {
+      sql += `AND `;
+      sql += materialCondition;
+    }
+
+    if (bufferCondition) {
+      sql += `AND `;
+      sql += bufferCondition;
+    }
+
+    return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
+      concatMap((res: any) => {
+        res.forEach(rec => {
+          batchInfos.push(Object.assign(new BatchInfo(), {
+            batchName: rec.BATCHNAME,
+            status: rec.STATUS,
+            materialType: rec.MATERIALTYPE,
+            material: rec.MATERIALNUMBER,
+            qty: rec.REMAINQUANTITY,
+            startQty: rec.QUANTITY,
+            currentLocation: rec.LOCATION,
+            barCode: ''
+          }));
+        });
+
+        return of(batchInfos);
+      })
+    );
+  }
+
 
   getOperatorByBadge(badge: string): Observable<OperatorInfo> {
     const operatorInfo: OperatorInfo = new OperatorInfo();

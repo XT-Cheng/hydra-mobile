@@ -6,37 +6,64 @@
       </div>
       <div class="weui-cell__bd">
         <input class="weui-input" #part type="search" autocomplete="off" shareAutoFocus name="part" id="part"
-          [(ngModel)]='inputData.part' (ngModelChange)="startSearch()" placeholder="Pls input Part" weui-required>
+          [(ngModel)]='inputData.part' (ngModelChange)="startSearchPart()" placeholder="Pls input Part" weui-required>
       </div>
     </div>
     <div class="weui-panel" style="margin-top: 0px;" *ngIf="inputData.part">
-      <div class="weui-panel__bd" *ngIf="searchResults | async; let searchResults; else loading">
+      <div class="weui-panel__bd" *ngIf="partSearchResults | async; let searchResults; else loading">
         <div class="weui-cell weui-cell_access" *ngFor="let part of searchResults">
           <div class="weui-cell__bd weui-cell_primary" (click)='partClicked(part)'>
             <p>{{part}}</p>
           </div>
         </div>
-        <div class="weui-media-box weui-media-box_text" *ngIf="searchResults?.length === 0">Can't find any！</div>
+        <div class="weui-media-box weui-media-box_text" *ngIf="hasNoPartResult(searchResults)">Can't find any Part！</div>
       </div>
       <ng-template #loading>
         <div class="weui-panel__bd">
-          <div class="weui-media-box weui-media-box_text">Loading...</div>
+          <div class="weui-media-box weui-media-box_text">Loading Part...</div>
         </div>
       </ng-template>
     </div>
-    <button weui-button (click)='findBatch()'>Find</button>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Buffer</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #materialBuffer type="search" autocomplete="off" name="materialBuffer" id="materialBuffer"
+          [(ngModel)]='inputData.materialBuffer' (ngModelChange)="startSearchBuffer()" placeholder="Pls input Material Buffer"
+          weui-required>
+      </div>
+    </div>
+    <div class="weui-panel" style="margin-top: 0px;" *ngIf="inputData.materialBuffer">
+      <div class="weui-panel__bd" *ngIf="bufferSearchResults | async; let searchResults; else loading">
+        <div class="weui-cell weui-cell_access" *ngFor="let buffer of searchResults">
+          <div class="weui-cell__bd weui-cell_primary" (click)='bufferClicked(buffer)'>
+            <p>{{buffer}}</p>
+          </div>
+        </div>
+        <div class="weui-media-box weui-media-box_text" *ngIf="hasNoBufferResult(searchResults)">Can't find any Buffer！</div>
+      </div>
+      <ng-template #loading>
+        <div class="weui-panel__bd">
+          <div class="weui-media-box weui-media-box_text">Loading Buffer...</div>
+        </div>
+      </ng-template>
+    </div>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(searchBatch, searchBatchSuccess, searchBatchFailed)'>Search</button>
     <div style='display: flex'>
       <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
     </div>
-    <div class="weui-cells__title">Mat. List</div>
-    <!-- <div class="weui-cells">
-      <div *ngFor='let comp of componentsInfo' class="weui-cell weui-cell_access">
-        <div class="weui-cell__bd">
-          <p>{{comp.MATERIAL}}</p>
+    <div class="weui-cells__title">Search Result</div>
+    <div class="weui-cells" style='overflow-y: scroll;'>
+      <div *ngFor='let batch of batchs' class="weui-cell weui-cell_access">
+        <div class="weui-cell__hd">
+          <i class="weui-icon-success" style='display: block;'></i>
         </div>
-        <div class="weui-cell__ft">{{compDescription(comp)}}</div>
+        <div class="weui-cell__bd">
+          <p>{{batch.material + ' ' + batch.qty + ' ' + batch.currentLocation}}</p>
+        </div>
       </div>
-    </div> -->
-
+    </div>
   </div>
 </form>
+<weui-mask #mask [backdrop]="false"></weui-mask>
