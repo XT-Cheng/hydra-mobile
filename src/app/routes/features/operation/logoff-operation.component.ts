@@ -2,9 +2,9 @@ import { Component, ViewChild, ElementRef } from '@angular/core';
 import { BapiService } from '@core/hydra/bapi/bapi.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { TitleService } from '@core/title.service';
-import { ToastService, ToptipsService, DialogService, DialogConfig, PopupComponent } from 'ngx-weui';
-import { filter, tap, catchError } from 'rxjs/operators';
-import { NgForm, Validators } from '@angular/forms';
+import { ToastService, ToptipsService } from 'ngx-weui';
+import { filter, tap } from 'rxjs/operators';
+import { NgForm } from '@angular/forms';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
 import { MachineInfo, InputData, ReasonInfo, OperatorInfo } from '@core/interface/common.interface';
 import { throwError } from 'rxjs';
@@ -127,7 +127,7 @@ export class LogoffOperationComponent {
   //#endregion
 
   //#region Event Handler
-  MachineEntered(event) {
+  MachineEntered() {
     // stopEvent(event);
 
     if (this.form.controls['machine'].invalid) {
@@ -138,7 +138,7 @@ export class LogoffOperationComponent {
     this.yieldElem.nativeElement.select();
   }
 
-  YieldEntered(event) {
+  YieldEntered() {
     // stopEvent(event);
 
     if (this.form.controls['yield'].invalid) {
@@ -149,7 +149,7 @@ export class LogoffOperationComponent {
     this.scrapElem.nativeElement.select();
   }
 
-  ScrapEntered(event) {
+  ScrapEntered() {
     // stopEvent(event);
 
     if (this.form.controls['scrap'].invalid) {
@@ -166,7 +166,7 @@ export class LogoffOperationComponent {
     }
   }
 
-  ScrapReasonEntered(event) {
+  ScrapReasonEntered() {
     // stopEvent(event);
 
     if (this.form.controls['scrapReason'].invalid) {
@@ -177,7 +177,7 @@ export class LogoffOperationComponent {
     this.operatorElem.nativeElement.select();
   }
 
-  OperatorEntered(event) {
+  OperatorEntered() {
     // stopEvent(event);
 
     if (this.form.controls['operator'].invalid) {

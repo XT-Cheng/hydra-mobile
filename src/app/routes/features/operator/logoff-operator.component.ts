@@ -112,7 +112,7 @@ export class LogoffOperatorComponent extends BaseForm {
     return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
       tap(operatorInfo => {
         if (!this.operatorList.some(o => o.badge === operatorInfo.badge)) {
-          throw Error(`Operator ${operatorInfo.badge} not logged on yet!`);
+          throw Error(`Operator ${operatorInfo.display()} not logged on yet!`);
         }
       }),
       map(operatorInfo => {
@@ -120,7 +120,9 @@ export class LogoffOperatorComponent extends BaseForm {
         this.operatorInfo['isRemove'] = true;
         const index = this.operatorList.findIndex(o => o.badge === operatorInfo.badge);
         this.operatorList.splice(index, 1, this.operatorInfo);
-        this.operatorList = this.operatorList.sort((a, b) => a['isRemove']);
+        this.operatorList = this.operatorList.sort((a, b) => a['isRemove'] ? 0 : 1);
+        this.inputData.badge = '';
+        this.operatorElem.nativeElement.focus();
       })
     );
   }
@@ -158,8 +160,7 @@ export class LogoffOperatorComponent extends BaseForm {
 
   logoffOperatorSuccess = () => {
     this._tipService['primary'](`Operators Logged Off!`);
-    const index = this.operatorList.findIndex(o => o.badge === this.operatorInfo.badge);
-    this.operatorList.splice(index, 1);
+    this.operatorList = this.operatorList.filter(o => !o['isRemove']);
     this.inputData.badge = '';
     this.operatorElem.nativeElement.focus();
   }

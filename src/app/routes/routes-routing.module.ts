@@ -66,7 +66,7 @@ const routes: Routes = [
       { path: 'material/logon', component: LogonBatchComponent },
       { path: 'material/logoff', component: LogoffBatchComponent },
       { path: 'material/replenish', component: ReplenishBatchComponent },
-      { path: 'machine/changestatus', component: ChangeMachineStatusComponent }
+      { path: 'machine/changeStatus', component: ChangeMachineStatusComponent }
     ]
   },
   // auth

@@ -35,8 +35,8 @@
         <label class="weui-label">Operator</label>
       </div>
       <div class="weui-cell__bd">
-        <input class="weui-input" #operator (keydown.enter)='operatorEntered($event)' name="operator" id="operator"
-          [(ngModel)]='inputData.badge' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
+        <input class="weui-input" #operator type='password' (keydown.enter)='operatorEntered($event)' name="operator"
+          id="operator" [(ngModel)]='inputData.badge' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
           placeholder="Pls input Operator" weui-required required>
       </div>
     </div>

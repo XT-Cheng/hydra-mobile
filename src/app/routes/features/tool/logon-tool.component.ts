@@ -116,11 +116,25 @@ export class LogonToolComponent extends BaseForm {
     return this._fetchService.getResourceInformation(this.inputData.tool).pipe(
       map(toolInfo => {
         this.toolInfo = toolInfo;
-        const found = this.toolList.some(c => {
+        const isAllowed = this.toolList.some(c => {
           return this.toolInfo.belongsTo === c.requiredTool;
         });
-        if (!found) {
-          return throwError(`Tool ${this.toolInfo.tool} not allowed!`);
+        if (!isAllowed) {
+          throw Error(`Tool ${this.toolInfo.tool} not allowed!`);
+        }
+
+        const isLoggedOn = this.toolList.some(c => {
+          return this.toolInfo.tool === c.inputTool;
+        });
+        if (isLoggedOn) {
+          throw Error(`Tool ${this.toolInfo.tool} already logged on!`);
+        }
+
+        const isGroupLoggedOn = this.toolList.some(c => {
+          return this.toolInfo.belongsTo === c.requiredTool && !!c.inputTool;
+        });
+        if (isGroupLoggedOn) {
+          throw Error(`Tool Group ${this.toolInfo.belongsTo} already logged on!`);
         }
       }));
   }
@@ -139,12 +153,11 @@ export class LogonToolComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
@@ -198,6 +211,15 @@ export class LogonToolComponent extends BaseForm {
 
   logonToolSuccess = () => {
     this._tipService['primary'](`Tool ${this.toolInfo.tool} Logged On!`);
+
+    const tool = this.toolList.find(c => this.toolInfo.belongsTo === c.requiredTool && !c.inputTool);
+    this.toolList = this.toolList.map(c => {
+      if (c.requiredTool === tool.requiredTool) {
+        return Object.assign(c, { inputTool: this.toolInfo.tool });
+      }
+      return c;
+    });
+
     this.inputData.tool = '';
     this.toolInfo = new ResourceInfo();
     this.toolElem.nativeElement.focus();
@@ -209,19 +231,15 @@ export class LogonToolComponent extends BaseForm {
 
   logonTool = () => {
     // Logon Tool
-    const tool = this.toolList.find(c => this.toolInfo.belongsTo === c.requiredTool && !c.inputTool);
+    this.executionContext = {
+      operation: this.machineInfo.nextOperation,
+      machine: this.machineInfo.machine,
+      toolId: this.toolInfo.toolId,
+      operator: this.operatorInfo.badge
+    };
 
     return this._bapiService.logonTool(this.machineInfo.nextOperation, this.machineInfo.machine,
-      this.toolInfo.toolId, this.operatorInfo.badge).pipe(
-        tap(_ => {
-          this.toolList = this.toolList.map(c => {
-            if (c.requiredTool === tool.requiredTool) {
-              return Object.assign(c, { inputTool: this.toolInfo.tool });
-            }
-            return c;
-          });
-        })
-      );
+      this.toolInfo.toolId, this.operatorInfo.badge);
   }
 
   //#endregion

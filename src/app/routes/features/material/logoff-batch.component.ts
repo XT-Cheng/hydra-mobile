@@ -105,8 +105,7 @@ export class LogoffBatchComponent extends BaseForm {
 
   //#region Batch Request
 
-  requestBatchDataSuccess = (ret) => {
-    this.batchInfo = ret;
+  requestBatchDataSuccess = () => {
     this.inputData.barCode = this.batchInfo.batchName;
   }
 
@@ -118,12 +117,11 @@ export class LogoffBatchComponent extends BaseForm {
 
   requestBatchData = () => {
     if (!this.inputData.barCode) {
-      this.batchInfo = new BatchInfo();
-      return of(this.batchInfo);
+      return of(null);
     }
 
     if (this.inputData.barCode === this.batchInfo.barCode) {
-      return of(this.batchInfo);
+      return of(null);
     }
 
     return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
@@ -131,15 +129,16 @@ export class LogoffBatchComponent extends BaseForm {
         this.batchInfo = batchInfo;
         return this._fetchService.getBatchInformation(batchInfo.batchName);
       }),
-      switchMap(batchInfo => {
+      map(batchInfo => {
+        this.batchInfo = Object.assign(this.batchInfo, batchInfo, {
+          barCode: this.batchInfo.barCode
+        });
         const found = this.componenstList.some(c => {
           return c.material === batchInfo.material && c.inputBatch === batchInfo.batchName;
         });
         if (!found) {
-          return throwError(`Batch ${this.batchInfo.batchName} not logged on yet!`);
+          throw Error(`Batch ${this.batchInfo.batchName} not logged on yet!`);
         }
-
-        return of(batchInfo);
       }));
   }
 
@@ -147,8 +146,7 @@ export class LogoffBatchComponent extends BaseForm {
 
   //#region Operator Reqeust
 
-  requestOperatorDataSuccess = (operatorInfo) => {
-    this.operatorInfo = operatorInfo;
+  requestOperatorDataSuccess = () => {
   }
 
   requestOperatorDataFailed = () => {
@@ -158,16 +156,20 @@ export class LogoffBatchComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
-    return this._fetchService.getOperatorByBadge(this.inputData.badge);
+    return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
+      map(operatorInfo => {
+        this.operatorInfo = operatorInfo;
+      })
+    );
   }
+
   //#endregion
 
   //#endregion
@@ -213,6 +215,12 @@ export class LogoffBatchComponent extends BaseForm {
 
   logoffBatchSuccess = () => {
     this._tipService['primary'](`Batch ${this.batchInfo.batchName} Logged Off!`);
+
+    const comp = this.componenstList.find(c => c.material === this.batchInfo.material && c.inputBatch === this.batchInfo.batchName);
+    this.componenstList = this.componenstList.filter(c => {
+      return !(c.inputBatch === comp.inputBatch);
+    });
+
     this.inputData.batchName = '';
     this.inputData.barCode = '';
     this.batchElem.nativeElement.focus();
@@ -226,13 +234,16 @@ export class LogoffBatchComponent extends BaseForm {
     // Logoff Batch
     const comp = this.componenstList.find(c => c.material === this.batchInfo.material && c.inputBatch === this.batchInfo.batchName);
 
+    this.executionContext = {
+      operation: this.machineInfo.nextOperation,
+      machine: this.machineInfo.machine,
+      batch: this.batchInfo.batchName,
+      position: comp.position,
+      operator: this.operatorInfo.badge
+    };
+
     return this._bapiService.logoffBatch(comp.operatoin, this.machineInfo.machine, this.operatorInfo.badge,
-      this.batchInfo.batchName, comp.position).pipe(
-        tap(_ => {
-          this.componenstList = this.componenstList.filter(c => {
-            return !(c.inputBatch === comp.inputBatch);
-          });
-        }));
+      this.batchInfo.batchName, comp.position);
   }
 
   //#endregion

@@ -120,7 +120,7 @@ export class LogoffToolComponent extends BaseForm {
           return this.toolInfo.tool === c.inputTool;
         });
         if (!found) {
-          return throwError(`Tool ${this.toolInfo.tool} not logged on yet!`);
+          throw Error(`Tool ${this.toolInfo.tool} not logged on yet!`);
         }
       }));
   }
@@ -139,12 +139,11 @@ export class LogoffToolComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
@@ -198,6 +197,11 @@ export class LogoffToolComponent extends BaseForm {
 
   logoffToolSuccess = () => {
     this._tipService['primary'](`Tool ${this.toolInfo.tool} Logged Off!`);
+
+    this.toolList = this.toolList.filter(c => {
+      return c.inputTool !== this.toolInfo.tool;
+    });
+
     this.inputData.tool = '';
     this.toolInfo = new ResourceInfo();
     this.toolElem.nativeElement.focus();
@@ -209,15 +213,16 @@ export class LogoffToolComponent extends BaseForm {
 
   logoffTool = () => {
     // Logoff Tool
+    this.executionContext = {
+      operation: this.machineInfo.nextOperation,
+      machine: this.machineInfo.machine,
+      toolId: this.toolInfo.toolId,
+      operator: this.operatorInfo.badge
+    };
+
     const tool = this.toolList.find(t => t.inputTool === this.toolInfo.tool);
     return this._bapiService.logoffTool(tool.operation, this.machineInfo.machine,
-      this.toolInfo.toolId, this.operatorInfo.badge).pipe(
-        tap(_ => {
-          this.toolList = this.toolList.filter(c => {
-            return c.inputTool !== this.toolInfo.tool;
-          });
-        })
-      );
+      this.toolInfo.toolId, this.operatorInfo.badge);
   }
 
   //#endregion

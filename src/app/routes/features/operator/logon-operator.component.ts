@@ -112,13 +112,15 @@ export class LogonOperatorComponent extends BaseForm {
     return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
       tap(operatorInfo => {
         if (this.operatorList.some(o => o.badge === operatorInfo.badge)) {
-          throw Error(`Operator ${operatorInfo.badge} already logged on!`);
+          throw Error(`Operator ${operatorInfo.display()} already logged on!`);
         }
       }),
       map(operatorInfo => {
         this.operatorInfo = operatorInfo;
         this.operatorInfo['isNew'] = true;
         this.operatorList.unshift(this.operatorInfo);
+        this.inputData.badge = '';
+        this.operatorElem.nativeElement.focus();
       })
     );
   }

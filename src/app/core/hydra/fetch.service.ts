@@ -110,7 +110,7 @@ export class FetchService {
 
     const compSql =
       `SELECT AUFTRAG_NR AS OPERATION, ARTIKEL AS MATERIAL, SOLL_MENGE AS USAGE, SOLL_EINH AS UNIT, POS FROM MLST_HY ` +
-      ` WHERE AUFTRAG_NR ='${operation}' ORDER BY POS`;
+      ` WHERE KENNZ = 'M' AND AUFTRAG_NR ='${operation}' ORDER BY POS`;
 
     const loadCompSql =
       `SELECT SUBKEY1 AS MACHINE, SUBKEY2 AS OPERATION, SUBKEY3 AS BATCHID, ` +

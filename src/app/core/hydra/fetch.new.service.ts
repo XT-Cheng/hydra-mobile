@@ -54,8 +54,10 @@ export class NewFetchService {
           result.status = res[0].STATUS;
           result.statusDescription = res[0].STATUSDESCRIPTION;
           result.belongsTo = res[0].REQUIREDRESOURCE ? res[0].REQUIREDRESOURCE : '';
+          return result;
+        } else {
+          throw Error(`Tool ${tool} not exist！`);
         }
-        return result;
       })
     );
   }
@@ -452,7 +454,7 @@ export class NewFetchService {
           operatorInfo.lastName = res[0].LASTNAME;
           return of(operatorInfo);
         } else {
-          return throwError(`Badge ${badge} not exist！`);
+          return throwError(`Badge your input not exist！`);
         }
       })
     );

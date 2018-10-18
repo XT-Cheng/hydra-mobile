@@ -99,8 +99,7 @@ export class LogonOperationComponent extends BaseForm {
 
   //#region Operator Reqeust
 
-  requestOperatorDataSuccess = (operatorInfo) => {
-    this.operatorInfo = operatorInfo;
+  requestOperatorDataSuccess = () => {
   }
 
   requestOperatorDataFailed = () => {
@@ -110,15 +109,18 @@ export class LogonOperationComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
-    return this._fetchService.getOperatorByBadge(this.inputData.badge);
+    return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
+      map(operatorInfo => {
+        this.operatorInfo = operatorInfo;
+      })
+    );
   }
 
   //#endregion
@@ -162,6 +164,12 @@ export class LogonOperationComponent extends BaseForm {
   }
 
   logonOperation = () => {
+    this.executionContext = {
+      operation: this.machineInfo.nextOperation,
+      machine: this.machineInfo.machine,
+      operator: this.operatorInfo.badge
+    };
+
     return this._bapiService.logonOperation(this.machineInfo.nextOperation, this.machineInfo.machine,
       this.inputData.badge);
   }

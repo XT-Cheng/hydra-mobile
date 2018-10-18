@@ -96,6 +96,7 @@ export class LogonBatchComponent extends BaseForm {
   //#region Batch Request
 
   requestBatchDataSuccess = (_) => {
+    this.inputData.barCode = this.batchInfo.batchName;
   }
 
   requestBatchDataFailed = () => {
@@ -115,18 +116,19 @@ export class LogonBatchComponent extends BaseForm {
 
     return this._fetchService.getBatchInfoFrom2DBarCode(this.inputData.barCode).pipe(
       switchMap((batchInfo: BatchInfo) => {
+        this.batchInfo = batchInfo;
         return this._fetchService.getBatchInformation(batchInfo.batchName, this.inputData.barCode);
       }),
       map(batchInfo => {
-        this.batchInfo = batchInfo;
+        this.batchInfo = Object.assign(this.batchInfo, batchInfo, {
+          barCode: this.batchInfo.barCode
+        });
         const found = this.componenstList.some(c => {
           return c.material === batchInfo.material && !c.inputBatch;
         });
         if (!found) {
-          return throwError(`Batch ${this.batchInfo.batchName} not allowed!`);
+          throw Error(`Batch ${this.batchInfo.batchName} not allowed!`);
         }
-
-        this.inputData.barCode = this.batchInfo.batchName;
       }));
   }
 
@@ -144,12 +146,11 @@ export class LogonBatchComponent extends BaseForm {
 
   requestOperatorData = () => {
     if (!this.inputData.badge) {
-      this.operatorInfo = new OperatorInfo();
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     if (this.inputData.badge === this.operatorInfo.badge) {
-      return of(this.operatorInfo);
+      return of(null);
     }
 
     return this._fetchService.getOperatorByBadge(this.inputData.badge).pipe(
@@ -203,6 +204,15 @@ export class LogonBatchComponent extends BaseForm {
 
   logonBatchSuccess = () => {
     this._tipService['primary'](`Batch ${this.batchInfo.batchName} Logged On!`);
+
+    const comp = this.componenstList.find(c => c.material === this.batchInfo.material && !c.inputBatch);
+    this.componenstList = this.componenstList.map(c => {
+      if (c.material === comp.material && c.position === comp.position) {
+        return Object.assign(c, { inputBatch: this.batchInfo.batchName, inputBatchQty: this.batchInfo.qty });
+      }
+      return c;
+    });
+
     this.inputData.barCode = '';
     this.batchElem.nativeElement.focus();
   }
@@ -214,18 +224,16 @@ export class LogonBatchComponent extends BaseForm {
   logonBatch = () => {
     // Logon Batch
     const comp = this.componenstList.find(c => c.material === this.batchInfo.material && !c.inputBatch);
+    this.executionContext = {
+      operation: this.machineInfo.nextOperation,
+      machine: this.machineInfo.machine,
+      batch: this.batchInfo.batchName,
+      position: comp.position,
+      operator: this.operatorInfo.badge
+    };
 
     return this._bapiService.logonBatch(this.machineInfo.nextOperation, this.machineInfo.machine,
-      this.operatorInfo.badge, this.batchInfo.batchName, this.batchInfo.material, comp.position).pipe(
-        tap(_ => {
-          this.componenstList = this.componenstList.map(c => {
-            if (c.material === comp.material && c.position === comp.position) {
-              return Object.assign(c, { inputBatch: this.batchInfo.batchName, inputBatchQty: this.batchInfo.qty });
-            }
-            return c;
-          });
-        })
-      );
+      this.operatorInfo.badge, this.batchInfo.batchName, this.batchInfo.material, comp.position);
   }
 
   //#endregion
