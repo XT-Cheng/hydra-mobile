@@ -22,7 +22,6 @@ import { LogoffOperationComponent } from './features/operation/logoff-operation.
 import { PackingComponent } from './features/operation/packing.component';
 import { LogoffInputBatchComponent } from './features/operation/logoffInputBatch-operation.component';
 import { FindBatchComponent } from './features/material/find-batch.component';
-import { PartialConfirmOperationComponent } from './features/operation/partialConfirm-operation.component';
 import { AdjustBatchQuantityComponent } from './features/material/adjust-batch-quantity.component';
 import { LogonBatchComponent } from './features/material/logon-batch.component';
 import { LogoffBatchComponent } from './features/material/logoff-batch.component';
@@ -35,6 +34,7 @@ import { LogonToolComponent } from './features/tool/logon-tool.component';
 import { LogoffToolComponent } from './features/tool/logoff-tool.component';
 import { ChangeMachineStatusComponent } from './features/machine/change-machine-status.component';
 import { BapiTestComponent } from './bapi.test.component';
+import { ScrapOperationComponent } from './features/operation/scrap-operation.component';
 
 const OPERATION_COMPONENTS = [
   LogonOperationComponent,
@@ -45,7 +45,7 @@ const OPERATION_COMPONENTS = [
   InterruptOperationComponent,
   LogoffOperationComponent,
   LogoffInputBatchComponent,
-  PartialConfirmOperationComponent,
+  ScrapOperationComponent,
   FindBatchComponent,
   PackingComponent
 ];

@@ -265,6 +265,8 @@ export class CreateBatchComponent extends BaseForm {
       material: this.batchInfo.material,
       qty: this.batchInfo.qty,
       bufferName: this.bufferInfo.name,
+      SAPBatch: this.batchInfo.SAPBatch,
+      dateCode: this.batchInfo.dateCode,
       operator: this.operatorInfo.badge
     };
     return this._bapiService
@@ -273,7 +275,9 @@ export class CreateBatchComponent extends BaseForm {
         this.batchInfo.material,
         this.batchInfo.qty,
         this.bufferInfo.name,
-        this.operatorInfo.badge
+        this.operatorInfo.badge,
+        this.batchInfo.SAPBatch,
+        this.batchInfo.dateCode
       ).pipe(
         switchMap(ret => {
           const numberOfSplits = parseInt(this.inputData.numberOfSplits, 10);

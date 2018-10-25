@@ -1,0 +1,62 @@
+<form #f="ngForm">
+  <div class="weui-cells weui-cells_form">
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Machine</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #machine shareKeyHandler required [keyHandler]='{nextInputId: "scrap",inputing: inputing, req: request(requestMachineData, requestMachineDataSuccess, requestMachineDataFailed)}'
+          shareAutoFocus name='machine' id='machine' (keydown.enter)='machineEntered($event)' [(ngModel)]='inputData.machineName'
+          placeholder="Pls input Machine" weui-required>
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{machineInfo.currentOPDisplay()}}
+      </span>
+    </label>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Scrap</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" [shareMin]='0' weui-input='number' #scrap shareKeyHandler (keydown.tab)='scrapEntered($event)'
+          (keydown.enter)='scrapEntered($event)' name="scrap" id="scrap" [(ngModel)]='inputData.scrap' placeholder="Pls input Scrap">
+      </div>
+    </div>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Reason</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #scrapReason shareKeyHandler [keyHandler]='{nextInputId: "operator",inputing: inputing, req: request(requestScrapReasonData, requestScrapReasonDataSuccess, requestScrapReasonDataFailed)}'
+          (keydown.enter)='scrapReasonEntered($event)' name="scrapReason" id="scrapReason" [(ngModel)]='inputData.scrapReason'
+          placeholder="Pls input Scrap Reason">
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{reasonInfo.display()}}
+      </span>
+    </label>
+    <div class="weui-cell">
+      <div class="weui-cell__hd">
+        <label class="weui-label">Operator</label>
+      </div>
+      <div class="weui-cell__bd">
+        <input class="weui-input" #operator type='password' shareKeyHandler [keyHandler]='{inputing: inputing, req: request(requestOperatorData, requestOperatorDataSuccess, requestOperatorDataFailed)}'
+          name="operator" id="operator" [(ngModel)]='inputData.badge' required placeholder="Pls input Operator"
+          weui-required required>
+      </div>
+    </div>
+    <label for="weuiAgree" class="weui-agree">
+      <span class="weui-agree__text">
+        {{operatorInfo.display()}}
+      </span>
+    </label>
+    <button weui-button [disabled]='isDisable()' #execute name="execute" id="execute" (click)='doAction(scrapOperation, scrapOperationSuccess, scrapOperationFailed)'>Scrap
+      Operation</button>
+    <button class='reset' weui-button weui-mini="mini" [weui-type]="'warn'" (click)='resetForm()'>Reset</button>
+  </div>
+</form>
+<weui-mask #mask [backdrop]="false"></weui-mask>

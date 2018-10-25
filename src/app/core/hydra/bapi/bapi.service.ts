@@ -45,8 +45,9 @@ export class BapiService {
   }
 
   createBatch(batchName: string, materialNumber: string, batchQty: number,
-    materialBuffer: string, badge: string): Observable<IBapiResult> {
-    return new CreateBatch(batchName, materialNumber, batchQty, materialBuffer, badge).execute(this.http);
+    materialBuffer: string, badge: string, batch: string = '', dateCode: string = ''): Observable<IBapiResult> {
+    return new CreateBatch(batchName, materialNumber, batchQty, materialBuffer, badge, batch, dateCode)
+      .execute(this.http);
   }
 
   logonUser(machine: string, badge: string) {

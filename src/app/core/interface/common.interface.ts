@@ -159,6 +159,8 @@ export interface BatchInfo {
   materialType: string;
   status: string;
   currentLocation: string;
+  SAPBatch: string;
+  dateCode: string;
   [name: string]: any;
   display(): string;
 }
@@ -168,6 +170,8 @@ export class BatchInfo implements BatchInfo {
   batchName = '';
   startQty = 0;
   qty = 0;
+  SAPBatch = '';
+  dateCode = '';
   material = '';
   materialType = '';
   status = '';

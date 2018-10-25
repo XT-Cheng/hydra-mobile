@@ -235,7 +235,7 @@ export class NewFetchService {
       }));
   }
 
-  getOperation(operation: string) {
+  getOperation(operation: string): Observable<OperationInfo> {
     const operationSql =
       `SELECT ARTIKEL AS MATERIAL, ARTIKEL_BEZ AS DESCRIPTION, AUNR AS WORKORDER, AGNR AS OPERATION, SOLL_MENGE_BAS AS TARGETQTY ` +
       ` FROM AUFTRAGS_BESTAND WHERE A_TYP = 'AG' AND AUFTRAG_NR = '${operation}'`;
@@ -472,6 +472,8 @@ export class NewFetchService {
     batchInfo.batchName = ret[0];
     batchInfo.barCode = barCodeOf2D;
     batchInfo.material = ret[1];
+    batchInfo.dateCode = 'Date_Code';
+    batchInfo.SAPBatch = 'SAP Batch';
     batchInfo.qty = batchInfo.startQty = parseInt(ret[2], 10);
     return of(batchInfo);
   }
@@ -505,8 +507,11 @@ export class NewFetchService {
       `LOS_BESTAND.ARTIKEL AS MATERIALNUMBER, LOS_BESTAND.ARTIKEL_BEZ AS MATERIALDESC, LOS_BESTAND.MENGE AS QUANTITY, ` +
       `LOS_BESTAND.RESTMENGE AS REMAINQUANTITY, LOS_BESTAND.EINHEIT AS UNIT, ` +
       `LOS_BESTAND.MAT_PUF AS LOCATION, MAT_PUFFER.BEZ AS LOCDESC, ` +
-      `STATUS AS STATUS, KLASSE AS CLASS FROM MAT_PUFFER, LOS_BESTAND ` +
-      `WHERE LOS_BESTAND.LOSNR = '${batchName}' AND MAT_PUFFER.MAT_PUF = LOS_BESTAND.MAT_PUF`;
+      `LOS_BESTAND.SAP_CHARGE AS SAPBATCH, LOS_ATTRIBUTE.ATTRIB_101 AS DATECODE, ` +
+      `STATUS AS STATUS, KLASSE AS CLASS FROM MAT_PUFFER, LOS_BESTAND, LOS_ATTRIBUTE ` +
+      `WHERE LOS_BESTAND.LOSNR = '${batchName}' AND MAT_PUFFER.MAT_PUF = LOS_BESTAND.MAT_PUF ` +
+      `AND LOS_ATTRIBUTE.LOSNR = LOS_BESTAND.LOSNR`;
+
     return this.http.get(`${WEBAPI_HOST}/${this.url}?sql=${sql}`).pipe(
       concatMap((res: any) => {
         if (res.length !== 0) {
@@ -515,6 +520,8 @@ export class NewFetchService {
           batchInfo.qty = res[0].REMAINQUANTITY;
           batchInfo.startQty = res[0].QUANTITY;
           batchInfo.currentLocation = res[0].LOCATION;
+          batchInfo.SAPBatch = res[0].SAPBATCH;
+          batchInfo.dateCode = res[0].DATECODE;
           batchInfo.barCode = barCode ? barCode : '';
           return of(batchInfo);
         } else {
