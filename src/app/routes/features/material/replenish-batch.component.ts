@@ -3,7 +3,7 @@ import { BapiService } from '@core/hydra/bapi/bapi.service';
 import { Router } from '@angular/router';
 import { TitleService } from '@core/title.service';
 import { ToastService, ToptipsService } from 'ngx-weui';
-import { switchMap, map, tap } from 'rxjs/operators';
+import { switchMap, map, tap, concatMap, concat } from 'rxjs/operators';
 import { throwError, of } from 'rxjs';
 import { BatchInfo, OperatorInfo, MachineInfo, ComponentInfo } from '@core/interface/common.interface';
 import { NewFetchService } from '@core/hydra/fetch.new.service';
@@ -246,10 +246,18 @@ export class ReplenishBatchComponent extends BaseForm {
   }
 
   changeBatch = () => {
-    // Change Batch
-    return this._bapiService.changeInputBatch(this.machineInfo.currentOperation, this.machineInfo.machine,
-      this.operatorInfo.badge, this.toBeChangedCompInfo.inputBatch, this.batchInfo.batchName,
-      this.toBeChangedCompInfo.position, this.toBeChangedCompInfo.material).pipe(
+    // Log off first
+    return this._bapiService.logoffBatch(this.machineInfo.currentOperation, this.machineInfo.machine,
+      this.operatorInfo.badge, this.toBeChangedCompInfo.inputBatch, this.toBeChangedCompInfo.position).pipe(
+        concatMap(() => {
+          // Then Merge
+          return this._bapiService.mergeBatch(this.batchInfo.batchName, this.toBeChangedCompInfo.inputBatch, this.operatorInfo.badge);
+        }),
+        concatMap(() => {
+          // Then Log on
+          return this._bapiService.logonBatch(this.machineInfo.currentOperation, this.machineInfo.machine,
+            this.operatorInfo.badge, this.batchInfo.batchName, this.batchInfo.material, this.toBeChangedCompInfo.position);
+        }),
         tap(_ => {
           const comp = this.componenstList.find(c => c.inputBatch === this.toBeChangedCompInfo.inputBatch);
           this.componenstList = this.componenstList.map(c => {

@@ -27,6 +27,7 @@ import { LogonTool } from '@core/hydra/bapi/logon.tool';
 import { LogoffTool } from '@core/hydra/bapi/logoff.tool';
 import { ChangeMachineStatus } from './change.machine.status';
 import { TestBapi } from './test.bapi';
+import { MergeBatch } from './merge.batch';
 
 @Injectable()
 export class BapiService {
@@ -66,7 +67,11 @@ export class BapiService {
     return new LogoffTool(operation, machine, badge, toolId).execute(this.http);
   }
 
-  mergeBatch(box: string, toBeMerged: string[], badgeName: string) {
+  mergeBatch(mergeTo: string, toBeMerged: string, badgeName: string) {
+    return new MergeBatch(mergeTo, toBeMerged, badgeName).execute(this.http);
+  }
+
+  mergeMultipleBatch(box: string, toBeMerged: string[], badgeName: string) {
     // const operations: OperatorFunction<any, any>[] = [];
     // const obs$: Observable<any> = of('start');
 
